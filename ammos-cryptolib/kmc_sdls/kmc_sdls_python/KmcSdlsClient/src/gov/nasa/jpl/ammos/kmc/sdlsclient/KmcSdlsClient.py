@@ -343,19 +343,173 @@ class KmcSdlsClient:
                                   , tc_result.tc_header.vcid
                                   , tc_result.tc_header.fl
                                   , tc_result.tc_header.fsn)
-            , TC_FrameSecurityHeader(tc_result.tc_sec_header.sh
+            , FrameSecurityHeader(tc_result.tc_sec_header.sh
                                      , tc_result.tc_sec_header.spi
                                      , self.c_array_to_bytearray(tc_result.tc_sec_header.iv,tc_result.tc_sec_header.iv_field_len)
                                      , self.c_array_to_bytearray(tc_result.tc_sec_header.sn,tc_result.tc_sec_header.sn_field_len)
                                      , self.c_array_to_bytearray(tc_result.tc_sec_header.pad,tc_result.tc_sec_header.pad_field_len)
                                      )
             , self.c_array_to_bytearray(tc_result.tc_pdu,tc_result.tc_pdu_len)
-            , TC_FrameSecurityTrailer(self.c_array_to_bytearray(tc_result.tc_sec_trailer.mac,tc_result.tc_sec_trailer.mac_field_len) #Using whole field length here -- only 128 bit macs are currently supported.
+            , FrameSecurityTrailer(self.c_array_to_bytearray(tc_result.tc_sec_trailer.mac,tc_result.tc_sec_trailer.mac_field_len) #Using whole field length here -- only 128 bit macs are currently supported.
                                       , tc_result.tc_sec_trailer.fecf)
         )
         self.ffi.release(tc_result)
         # Returning Python objects instead of the CFFI objects is somewhat inefficient. If performance becomes a problem, consider removing this nicety.
         return tc_sdls_object
+
+    def apply_security_aos(self,input_byte_array):
+        '''
+        Apply SDLS security to the supplied AOS Transfer Frame.
+
+        Parameters
+        ----------
+        input_byte_array : bytearray
+             The AOS Transfer Frame byte array that will be wrapped in a security layer.
+             Note that the AOS transfer frame FECF should not be included in this byte array.
+
+        Returns
+        ----------
+        bytearray
+            The AOS Transfer Frame bytearray that has been wrapped in a security layer.
+        '''
+        if input_byte_array is None:
+            raise SdlsClientException(SdlsClientException.NO_FRAME_DATA,"Input Transfer Frame Byte Array is Empty")
+
+        if not isinstance(input_byte_array, bytearray):
+            raise SdlsClientException(SdlsClientException.BAD_DATA_FORMAT,"Input Transfer Frame is not a bytearray, actual type: %s" % type(input_byte_array).__name__)
+
+        in_copy = bytearray(input_byte_array)
+        aos_char_in_frame = self.ffi.from_buffer(in_copy, require_writable=True)
+        aos_char_star_in = aos_char_in_frame
+        aos_len_in = self.ffi.cast("uint16_t",len(aos_char_in_frame))
+        apply_security_result = kmc_python_c_sdls_interface.lib.apply_security_aos(aos_char_star_in, aos_len_in)
+        if apply_security_result != SUCCESS:
+            raise SdlsClientException(SdlsClientException.APPLY_SECURITY_EXCEPTION,"KMC CryptoLib Apply Security Exception.",apply_security_result)
+        return bytearray(self.ffi.buffer(aos_char_star_in[0],aos_len_in[0]))
+
+    def process_security_aos(self,input_byte_array):
+        '''
+        Process SDLS security from the supplied AOS Transfer Frame.
+
+        Parameters
+        ----------
+        input_byte_array : bytearray
+            The AOS Transfer Frame byte array that currently wrapped in a security layer, that will be unwrapped
+        '''
+        if input_byte_array is None:
+            raise SdlsClientException(SdlsClientException.NO_FRAME_DATA,"Input Transfer Frame Byte Array is Empty")
+        if not isinstance(input_byte_array, bytearray):
+            raise SdlsClientException(SdlsClientException.BAD_DATA_FORMAT,"Input Transfer Frame is not a bytearray, actual type: %s" % type(input_byte_array).__name__)
+
+        in_copy = bytearray(input_byte_array)
+        aos_char = self.ffi.from_buffer(in_copy, require_writable=True)
+        aos_len = self.ffi.new("int *")
+        aos_len[0] = len(aos_char)
+        aos_result = self.ffi.new("AOS_t *") # Frame that will contain the processed SDLS fields
+        aos_result_len = self.ffi.new("int *")
+        process_security_result = kmc_python_c_sdls_interface.lib.process_security_aos(aos_char, aos_len, aos_result, aos_result_len)
+
+        if(process_security_result != SUCCESS):
+            raise SdlsClientException(SdlsClientException.PROCESS_SECURITY_EXCEPTION,"KMC CryptoLib Process Security Exception.",process_security_result)
+
+        aos_sdls_object = AOS(
+            AOS_FramePrimaryHeader(aos_result.tm_header.tfvn
+                                  , aos_result.tm_header.scid
+                                  , aos_result.tm_header.vcid
+                                  , aos_result.tm_header.vcfc
+                                  , aos_result.tm_header.rf
+                                  , aos_result.tm_header.sf
+                                  , aos_result.tm_header.spare
+                                  , aos_result.tm_header.vfcc
+                                  , aos_result.tm_header.fhec)
+            , FrameSecurityHeader(aos_result.tc_sec_header.spi
+                                     , self.c_array_to_bytearray(aos_result.tc_sec_header.iv,96) # IV length is always 96 bits
+                                     )
+            , self.c_array_to_bytearray(aos_result.aos_pdu,1786) # crypto_structs.h defines this as constant 1786?
+            , FrameSecurityTrailer(self.c_array_to_bytearray(aos_result.tc_sec_trailer.mac,128) #Using whole field length here -- only 128 bit macs are currently supported.
+                                      , aos_result.tc_sec_trailer.fecf) # CCSDS spec doesn't have an OCF here
+        )
+        self.ffi.release(aos_result)
+        # Returning Python objects instead of the CFFI objects is somewhat inefficient. If performance becomes a problem, consider removing this nicety.
+        return aos_sdls_object
+
+    def apply_security_tm(self,input_byte_array):
+        '''
+        Apply SDLS security to the supplied AOS Transfer Frame.
+
+        Parameters
+        ----------
+        input_byte_array : bytearray
+             The AOS Transfer Frame byte array that will be wrapped in a security layer.
+             Note that the AOS transfer frame FECF should not be included in this byte array.
+
+        Returns
+        ----------
+        bytearray
+            The AOS Transfer Frame bytearray that has been wrapped in a security layer.
+        '''
+        if input_byte_array is None:
+            raise SdlsClientException(SdlsClientException.NO_FRAME_DATA,"Input Transfer Frame Byte Array is Empty")
+
+        if not isinstance(input_byte_array, bytearray):
+            raise SdlsClientException(SdlsClientException.BAD_DATA_FORMAT,"Input Transfer Frame is not a bytearray, actual type: %s" % type(input_byte_array).__name__)
+
+        in_copy = bytearray(input_byte_array)
+        tm_char_in_frame = self.ffi.from_buffer(in_copy, require_writable=True)
+        tm_char_star_in = tm_char_in_frame
+        tm_len_in = self.ffi.cast("uint16_t",len(tm_char_in_frame))
+        apply_security_result = kmc_python_c_sdls_interface.lib.apply_security_tm(tm_char_star_in, tm_len_in)
+        if apply_security_result != SUCCESS:
+            raise SdlsClientException(SdlsClientException.APPLY_SECURITY_EXCEPTION,"KMC CryptoLib Apply Security Exception.",apply_security_result)
+        return bytearray(self.ffi.buffer(tm_char_star_in[0],tm_len_in[0]))
+
+    def process_security_tm(self,input_byte_array):
+        '''
+        Process SDLS security from the supplied AOS Transfer Frame.
+
+        Parameters
+        ----------
+        input_byte_array : bytearray
+            The AOS Transfer Frame byte array that currently wrapped in a security layer, that will be unwrapped
+        '''
+        if input_byte_array is None:
+            raise SdlsClientException(SdlsClientException.NO_FRAME_DATA,"Input Transfer Frame Byte Array is Empty")
+        if not isinstance(input_byte_array, bytearray):
+            raise SdlsClientException(SdlsClientException.BAD_DATA_FORMAT,"Input Transfer Frame is not a bytearray, actual type: %s" % type(input_byte_array).__name__)
+
+        in_copy = bytearray(input_byte_array)
+        tm_char = self.ffi.from_buffer(in_copy, require_writable=True)
+        tm_len = self.ffi.new("int *")
+        tm_len[0] = len(tm_char)
+        tm_result = self.ffi.new("AOS_t *") # Frame that will contain the processed SDLS fields
+        tm_result_len = self.ffi.new("int *")
+        process_security_result = kmc_python_c_sdls_interface.lib.process_security_tm(tm_char, tm_len, tm_result, tm_result_len)
+
+        if(process_security_result != SUCCESS):
+            raise SdlsClientException(SdlsClientException.PROCESS_SECURITY_EXCEPTION,"KMC CryptoLib Process Security Exception.",process_security_result)
+
+        tm_sdls_object = TM(
+            TM_FramePrimaryHeader(tm_result.tm_header.tfvn
+                                   , tm_result.tm_header.scid
+                                   , tm_result.tm_header.vcid
+                                   , tm_result.tm_header.ocff
+                                   , tm_result.tm_header.mcfc
+                                   , tm_result.tm_header.vcfc
+                                   , tm_result.tm_header.tfsh
+                                   , tm_result.tm_header.sf
+                                   , tm_result.tm_header.pof
+                                   , tm_result.tm_header.slid
+                                   , tm_result.tm_header.fhp)
+            , FrameSecurityHeader(tm_result.tc_sec_header.spi
+                                  , self.c_array_to_bytearray(tm_result.tc_sec_header.iv,96) # IV length is always 96 bits
+                                  )
+            , self.c_array_to_bytearray(tm_result.aos_pdu,1786) # crypto_structs.h defines this as constant 1786?
+            , FrameSecurityTrailer(self.c_array_to_bytearray(tm_result.tc_sec_trailer.mac,128) #Using whole field length here -- only 128 bit macs are currently supported.
+                                   , tm_result.tc_sec_trailer.fecf) # CCSDS spec doesn't have an OCF here
+        )
+        self.ffi.release(tm_result)
+        # Returning Python objects instead of the CFFI objects is somewhat inefficient. If performance becomes a problem, consider removing this nicety.
+        return tm_sdls_object
 
     def shutdown(self):
         return kmc_python_c_sdls_interface.lib.sdls_shutdown()
@@ -402,26 +556,60 @@ class TC_FramePrimaryHeader(NamedTuple):
     fl: int         # Frame Length
     fsn: int        # Frame Sequence Number
 
+class AOS_FramePrimaryHeader(NamedTuple):
+    tfvn: int       # Transfer Frame Version Number
+    scid: int       # Spacecraft ID
+    vcid: int       # Virtual Channel ID
+    vcfc: int       # Virtual Channel Frame Count
+    replay: int     # Replay Flag
+    vcflag: int     # VC Frame Count Usage Flag
+    spare: int      # Reserved Spare
+    vcfcc: int      # VC Frame Count Cycle
+    fhec: int       # Frame Header Error Control
 
-class TC_FrameSecurityHeader(NamedTuple):
+class TM_FramePrimaryHeader(NamedTuple):
+    tfvn: int       # Transfer Frame Version Number
+    scid: int       # Spacecraft ID
+    vcid: int       # Virtual Channel ID
+    ocf: int        # Operational Control Field Flag
+    mcfc: int       # Master Channel Frame Count
+    vcfc: int       # Virtual Channel Frame Count
+    shf: int        # Secondary Header Flag
+    sf: int         # Synch Flag
+    pof: int        # Packet Order Flag
+    slid: int       # Segment Length ID
+    fhp: int        # First Header Pointer
+
+
+class FrameSecurityHeader(NamedTuple):
     sh: int         # Segment Header
     spi: int        # Security Parameter Index
     iv: bytearray   # Initialization Vector
     sn: bytearray   # Sequence Number
     pad: bytearray  # Pad
 
-
-class TC_FrameSecurityTrailer(NamedTuple):
+class FrameSecurityTrailer(NamedTuple):
     mac: bytearray  # Message Authentication Code
     fecf: int       #Frame Error Control Field
 
 
 class TC(NamedTuple):
     tc_header: TC_FramePrimaryHeader
-    tc_security_header: TC_FrameSecurityHeader
+    tc_security_header: FrameSecurityHeader
     tc_pdu: bytearray
-    tc_security_trailer: TC_FrameSecurityTrailer
+    tc_security_trailer: FrameSecurityTrailer
 
+class AOS(NamedTuple):
+    aos_header: AOS_FramePrimaryHeader
+    aos_security_header: FrameSecurityHeader
+    aos_pdu: bytearray
+    aos_security_trailer: FrameSecurityTrailer
+
+class TM(NamedTuple):
+    tm_header: TM_FramePrimaryHeader
+    tm_security_header: FrameSecurityHeader
+    tm_pdu: bytearray
+    tm_security_trailer: FrameSecurityTrailer
 
 class SdlsClientException(Exception):
     '''

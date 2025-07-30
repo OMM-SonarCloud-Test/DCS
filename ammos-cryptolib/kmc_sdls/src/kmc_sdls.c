@@ -52,16 +52,16 @@ int32_t apply_security_aos(uint8_t *ptBuffer, uint16_t length) {
     return Crypto_AOS_ApplySecurity(ptBuffer, length);
 }
 
-int32_t process_security_aos(uint8_t *ptBuffer, uint16_t length, uint8_t **pp_enc_frame, uint16_t *p_enc_frame_len) {
-    return Crypto_AOS_ProcessSecurity(ptBuffer, length, pp_enc_frame, p_enc_frame_len);
+int32_t process_security_aos(uint8_t *ptBuffer, uint16_t length, AOS_t* p_enc_frame, uint16_t *p_enc_frame_len) {
+    return Crypto_AOS_ProcessSecurity(ptBuffer, length, p_enc_frame, p_enc_frame_len);
 }
 
 int32_t apply_security_tm(uint8_t *ptBuffer, uint16_t length) {
     return Crypto_TM_ApplySecurity(ptBuffer, length);
 }
 
-int32_t process_security_tm(uint8_t *ptBuffer, uint16_t length, uint8_t **pp_enc_frame, uint16_t *p_enc_frame_len) {
-    return Crypto_TM_ProcessSecurity(ptBuffer, length,pp_enc_frame, p_enc_frame_len);
+int32_t process_security_tm(uint8_t *ptBuffer, uint16_t length, TM_t* p_enc_frame, uint16_t *p_enc_frame_len) {
+    return Crypto_TM_ProcessSecurity(ptBuffer, length, p_enc_frame, p_enc_frame_len);
 }
 
 int32_t sdls_config_cryptolib(uint8_t sadb_type, uint8_t cryptography_type, uint8_t crypto_create_fecf, uint8_t process_sdls_pdus, uint8_t has_pus_hdr, uint8_t ignore_sa_state, uint8_t ignore_anti_replay, uint8_t unique_sa_per_mapid, uint8_t crypto_check_fecf, uint8_t vcid_bitmask, uint8_t crypto_increment_nontransmitted_iv)
