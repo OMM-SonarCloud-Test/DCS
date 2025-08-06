@@ -1,6 +1,6 @@
-# KMC SA Management GUI
+# DCS SA Management GUI
 
-Author: [JP Pan (393C)](mailto:panjames@jpl.nasa.gov?subject=KMC SA Management GUI)
+Author: [JP Pan (393C)](mailto:panjames@jpl.nasa.gov?subject=DCS SA Management GUI)
 
 - Spring Boot web service
 - React frontend (CRA)

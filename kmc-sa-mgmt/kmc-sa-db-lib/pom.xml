@@ -19,13 +19,13 @@
 
     <artifactId>kmc-sa-db-lib</artifactId>
     <packaging>jar</packaging>
-    <version>3.7.0</version>
-    <name>ASEC KMC SA DB Library</name>
+    <version>4.0.0</version>
+    <name>DCS SA DB Library</name>
 
     <parent>
         <artifactId>kmc-sa-mgmt</artifactId>
         <groupId>gov.nasa.jpl.ammos.kmc</groupId>
-        <version>3.7.0</version>
+        <version>4.0.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -94,6 +94,16 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-eclipse-plugin</artifactId>
+                <configuration>
+                    <downloadSources>true</downloadSources>
+                    <downloadJavadocs>true</downloadJavadocs>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 
@@ -199,16 +209,16 @@
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bctls-fips</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bc-fips</artifactId>
-        </dependency>
+    
+      <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bctls-fips</artifactId>
+      </dependency>
+    
+      <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bc-fips</artifactId>
+      </dependency>
     </dependencies>
 
     <repositories>

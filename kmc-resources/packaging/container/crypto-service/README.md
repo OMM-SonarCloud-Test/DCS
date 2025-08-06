@@ -1,44 +1,44 @@
-# KMC Crypto Service Container
+# DCS Crypto Service Container
 
-The KMC Crypto Service Container provides a self-contained KMC Crypto Service offering data-level cryptography.  KMC, including the Crypto Service Container is available under the Apache 2.0 software license, but this container is based on the Red Hat Enterprise Linux (RHEL) 9 Universal Basic Image (UBI), which is subject to their licensing terms.  See https://www.redhat.com/en/about/red-hat-end-user-license-agreements#UBI for specifics about the RHEL 9 UBI licensing.
+The DCS Crypto Service Container provides a self-contained DCS Crypto Service offering data-level cryptography.  DCS, including the Crypto Service Container is available under the Apache 2.0 software license, but this container is based on the Red Hat Enterprise Linux (RHEL) 9 Universal Basic Image (UBI), which is subject to their licensing terms.  See https://www.redhat.com/en/about/red-hat-end-user-license-agreements#UBI for specifics about the RHEL 9 UBI licensing.
 
 ## Building the Container
 
-Follow the instructions in the root level README.md to configure and build KMC.  In particular, make sure to configure the CONTAINER_EXEC variable in setenv.sh to match your local container engine. CONTAINER_EXEC defaults to /bin/podman, since that is the default container virtualzation package offered on Red Hat Enterprise Linux 9.  Once the build is complete, use the deploy.sh script to execute the container builds.
+Follow the instructions in the root level README.md to configure and build DCS.  In particular, make sure to configure the CONTAINER_EXEC variable in setenv.sh to match your local container engine. CONTAINER_EXEC defaults to /bin/podman, since that is the default container virtualzation package offered on Red Hat Enterprise Linux 9.  Once the build is complete, use the deploy.sh script to execute the container builds.
 
-From the root of the KMC repository, run the following command once the build and tests are complete:
+From the root of the DCS repository, run the following command once the build and tests are complete:
 ```kmc-resources/scripts/deploy.sh --img```
 
-That command will deploy all of the KMC files into a local directory (kmc-resources/packaging/container/kmcroot) and then execute the container build process using the Dockerfile in each of the service container trees.  The container build process requires access to the Internet for two things: 
+That command will deploy all of the DCS files into a local directory (kmc-resources/packaging/container/kmcroot) and then execute the container build process using the Dockerfile in each of the service container trees.  The container build process requires access to the Internet for two things: 
 * Retrieval of the RHEL9 UBI image
 * Download of the BouncyCastle FIPS Java library from Maven Central, which is used to support FIPS-compliant keystores.
 
-At the end of the container build process, there should be three KMC containers in your local image repository (examples shown using podman):
+At the end of the container build process, there should be three DCS containers in your local image repository (examples shown using podman):
 
 ```
 $ podman image ls
 REPOSITORY                                  TAG         IMAGE ID      CREATED            SIZE
-localhost/kmc-sa-mgmt-service               3.7.0       aebf0191473b  About an hour ago  890 MB
-localhost/kmc-sdls-service                  3.7.0       cfb068d65d92  About an hour ago  890 MB
-localhost/kmc-crypto-service                3.7.0       2e1285394471  About an hour ago  890 MB
+localhost/kmc-sa-mgmt-service               4.0.0       aebf0191473b  About an hour ago  890 MB
+localhost/kmc-sdls-service                  4.0.0       cfb068d65d92  About an hour ago  890 MB
+localhost/kmc-crypto-service                4.0.0       2e1285394471  About an hour ago  890 MB
 ```
 
 The image can be saved to transferrable image files with the following commands:
 ```
-$ podman image save -o kmc-crypto-service-3.7.0.tar kmc-crypto-service:3.7.0
+$ podman image save -o kmc-crypto-service-4.0.0.tar kmc-crypto-service:4.0.0
 ```
 
 ## Crypto Service Container Configuration Options
-There are a large number of configurable options that control the behavior and operation of the KMC Crypto Service Container.  The full list is documented here.
+There are a large number of configurable options that control the behavior and operation of the DCS Crypto Service Container.  The full list is documented here.
 
 Some of the configuration options are "sensitive" data -- TLS keys, keystores, passwords, etc.  It is *STRONGLY RECOMMENDED* that secure methods be used to provide these configuration items to the container.  Podman/docker secrets, Amazon Secrets Manager, and similar systems can and should be used for any configuration options marked "Sensitive."  
 
 
 ## Deploying the Crypto Service Container
 
-The KMC Crypto Service Container can be deployed via a wide variety of tools and processes.  Examples are provided for running the bare container with podman and using podman-compose.  Releases of the Crypto Service Container are also tested in the Amazon Elastic Container Service (ECS), and can be run there.  The KMC Crypto Service Container should be deployable on any container virtualization system that supports OCI-compliant images and processes.
+The DCS Crypto Service Container can be deployed via a wide variety of tools and processes.  Examples are provided for running the bare container with podman and using podman-compose.  Releases of the Crypto Service Container are also tested in the Amazon Elastic Container Service (ECS), and can be run there.  The DCS Crypto Service Container should be deployable on any container virtualization system that supports OCI-compliant images and processes.
 
-There are a large number of configurable options that control the behavior and operation of the KMC Crypto Service Container.  For the full list, see "Crypto Service Container Configuration Options" above. These examples are minimalist configurations that utilize the default settings as much as possible.  
+There are a large number of configurable options that control the behavior and operation of the DCS Crypto Service Container.  For the full list, see "Crypto Service Container Configuration Options" above. These examples are minimalist configurations that utilize the default settings as much as possible.  
 
 Both examples below use podman secrets for sensitive configuration information, as well as for a simple method to provide some non-sensitive options (like the TLS CA Certificate Bundle).
 
@@ -46,7 +46,7 @@ Both examples below use podman secrets for sensitive configuration information, 
 
 1. Import the Image (optional, if image is available in a configured repository)
 ```bash
-$ podman image load -i kmc-crypto-service-3.7.0.tar.gz
+$ podman image load -i kmc-crypto-service-4.0.0.tar.gz
 ```
 
 1. Configure Secrets
@@ -60,13 +60,13 @@ $ echo "changeit" | podman secret create tls_mtls_truststore_pass -
 $ echo "s00p3rs3cr3tp@ssph4se" | podman secret create crypto_keystore_pass -
 ```
 
-1. Create KMC Crypto Service Container
+1. Create DCS Crypto Service Container
 ```bash
 podman container create -p 8443:8443 --name kmc-crypto-service \
   --secret tls_host_key --secret tls_host_cert --secret tls_ca_bundle \
   --secret crypto_keystore --secret crypto_keystore_pass \
   --secret crypto_key_pass --secret tls_mtls_truststore \
-  kmc-crypto-service:3.7.0
+  kmc-crypto-service:4.0.0
 ```
 
 1. Create SystemD Unit file for container (if desired)
@@ -91,11 +91,11 @@ podman start kmc-crypto-service
 ```
 
 ### Deploying with podman-compose
-Podman-compose uses YAML-formatted files to configure one or more services.  An example podman-compose file for the KMC Crypto Service Container can be found in kmc-resources/packaging/container/crypto-service/podman-compose-example.yml.  This example compose file uses podman secrets like the previous example to manage sensitive inputs.
+Podman-compose uses YAML-formatted files to configure one or more services.  An example podman-compose file for the DCS Crypto Service Container can be found in kmc-resources/packaging/container/crypto-service/podman-compose-example.yml.  This example compose file uses podman secrets like the previous example to manage sensitive inputs.
 
 1. Import the Image (optional, if image is available in a configured repository)
 ```bash
-$ podman image load -i kmc-crypto-service-3.7.0.tar.gz
+$ podman image load -i kmc-crypto-service-4.0.0.tar.gz
 ```
 
 1. Configure Secrets

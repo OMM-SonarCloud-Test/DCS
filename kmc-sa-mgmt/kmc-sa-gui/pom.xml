@@ -21,48 +21,49 @@
     <parent>
         <artifactId>kmc-sa-mgmt</artifactId>
         <groupId>gov.nasa.jpl.ammos.kmc</groupId>
-        <version>3.7.0</version>
+        <version>4.0.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
+    <groupId>groupId</groupId>
     <artifactId>kmc-sa-gui</artifactId>
-    <name>ASEC KMC SA GUI Server and Frontend</name>
-    <version>3.7.0</version>
+    <name>DCS SA GUI Server and Frontend</name>
+    <version>4.0.0</version>
     <packaging>jar</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <frontend-src-dir>${project.basedir}/src/main/frontend</frontend-src-dir>
-        <node.version>v23.1.0</node.version>
-        <yarn.version>v1.22.22</yarn.version>
+        <node.version>v18.3.0</node.version>
+        <yarn.version>v1.22.19</yarn.version>
         <!-- yarn-registry-url is the default Yarn regestry URL used for retreving packages.  -->
         <!-- Allows for use of a local repo to force cacheing, preservation of dependenices, or use of alterntate dependencies.  -->
         <!-- Consider setting the property yarn-registry-url in an active profile your maven settings.xml if you would rather not modify this file. -->
         <!-- When set to empty, Yarn ignores this option and uses system defaults  -->
         <yarn-registry-url></yarn-registry-url>
-
-        <frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
+        
+        <frontend-maven-plugin.version>1.12.1</frontend-maven-plugin.version>
         <final.name>kmc-sa-mgmt</final.name>
         <app.profiles>mTLS</app.profiles>
         <spring.profiles.active>${app.profiles}</spring.profiles.active>
-        <!--  SEE PARENT POM for configuration of these options, they have been moved there.
-         <DEFAULT_BINPATH></DEFAULT_BINPATH>
-         <DEFAULT_LIBPATH></DEFAULT_LIBPATH>
-         <DEFAULT_CFGPATH></DEFAULT_CFGPATH>
-         <DEFAULT_LOGPATH></DEFAULT_LOGPATH> -->
-
+       <!--  SEE PARENT POM for configuration of these options, they have been moved there.
+        <DEFAULT_BINPATH></DEFAULT_BINPATH>
+        <DEFAULT_LIBPATH></DEFAULT_LIBPATH>
+        <DEFAULT_CFGPATH></DEFAULT_CFGPATH>
+        <DEFAULT_LOGPATH></DEFAULT_LOGPATH> -->
+        
         <DEFAULT_PREFIX>${DEFAULT_KMC_ROOT}/services/${final.name}</DEFAULT_PREFIX>
         <DEFAULT_TOMCAT_PREFIX>${DEFAULT_PREFIX}</DEFAULT_TOMCAT_PREFIX>
         <DEFAULT_PORT>8447</DEFAULT_PORT>
         <DEFAULT_ALLOWED_CIPHERS>
-            TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,\
-            TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,\
-            TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,\
-            TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,\
-            TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,\
-            TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,\
-            TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,\
-            TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,\
+        TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,\
+        TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,\
+        TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,\
+        TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,\
+        TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,\
+        TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,\
+        TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
         </DEFAULT_ALLOWED_CIPHERS>
         <DEFAULT_KEYSTORE>/etc/pki/tls/private/ammos-server-keystore.bcfks</DEFAULT_KEYSTORE>
         <DEFAULT_KEYSTORE_PASSWORD>changeit</DEFAULT_KEYSTORE_PASSWORD>
@@ -74,7 +75,7 @@
         <DEFAULT_TRUSTSTORE_TYPE>JKS</DEFAULT_TRUSTSTORE_TYPE>
         <DEFAULT_CLIENT_AUTH>NEED</DEFAULT_CLIENT_AUTH>
         <DEFAULT_ENABLED_PROTOCOLS>TLSv1.2</DEFAULT_ENABLED_PROTOCOLS>
-    </properties>
+        </properties>
 
     <profiles>
         <profile>
@@ -90,41 +91,6 @@
                 <DEFAULT_LOGPATH>${DEFAULT_PREFIX}/log</DEFAULT_LOGPATH>
                 <DEFAULT_KEYSTORE>${DEFAULT_LIBPATH}/</DEFAULT_KEYSTORE>
             </properties>
-        </profile>
-        <profile>
-            <id>no-frontend</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.github.eirslett</groupId>
-                        <artifactId>frontend-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>install-frontend-tools</id>
-                                <phase>none</phase>
-                            </execution>
-                            <execution>
-                                <id>yarn-install</id>
-                                <phase>none</phase>
-                            </execution>
-                            <execution>
-                                <id>build-frontend</id>
-                                <phase>none</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>copy-frontend</id>
-                                <phase>none</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
     </profiles>
 
@@ -148,7 +114,7 @@
                     <goal>clean</goal>
                     <filesets>
                         <fileset>
-                            <directory>${project.basedir}/src/main/frontend/dist</directory>
+                            <directory>${project.basedir}/src/main/frontend/build</directory>
                         </fileset>
                     </filesets>
                 </configuration>
@@ -168,9 +134,8 @@
                     <profiles>${app.profiles}</profiles>
                     <mainClass>gov.nasa.jpl.ammos.asec.kmc.saserver.app.KmcSaMgmt</mainClass>
                     <layout>ZIP</layout>
-                    <loaderImplementation>CLASSIC</loaderImplementation>
                 </configuration>
-                <executions>
+                    <executions>
                     <execution>
                         <goals>
                             <goal>repackage</goal>
@@ -185,8 +150,8 @@
                 <configuration>
                     <nodeVersion>${node.version}</nodeVersion>
                     <yarnVersion>${yarn.version}</yarnVersion>
-                    <workingDirectory>src/main/frontend</workingDirectory>
-                    <srcdir>src/main/frontend</srcdir>
+                    <workingDirectory>${frontend-src-dir}</workingDirectory>
+                    <srcdir>${frontend-src-dir}</srcdir>
                     <installDirectory>target</installDirectory>
                     <environmentVariables>
                         <YARN_REGISTRY>${yarn-registry-url}
@@ -235,13 +200,13 @@
                             <outputDirectory>${project.build.outputDirectory}/static</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}/src/main/frontend/dist</directory>
+                                    <directory>${project.basedir}/src/main/frontend/build</directory>
                                 </resource>
                             </resources>
                             <delimiters>
-                                <delimiter>@</delimiter>
-                            </delimiters>
-                            <useDefaultDelimiters>false</useDefaultDelimiters>
+		                    	<delimiter>@</delimiter>
+	                    	</delimiters>
+	                    	<useDefaultDelimiters>false</useDefaultDelimiters>
                         </configuration>
                     </execution>
                 </executions>
@@ -271,6 +236,22 @@
                     </execution>
                 </executions>
             </plugin>
+        <!--     <plugin>
+
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <archive>
+                    <manifest>
+                        <addClasspath>true</addClasspath>
+                        <classpathPrefix>lib/</classpathPrefix>
+                        <mainClass>gov.nasa.jpl.ammos.asec.kmc.saserver.app.KmcSaMgmt</mainClass>
+                    </manifest>
+                    </archive>
+                </configuration>
+            </plugin> -->
+            
         </plugins>
     </build>
 
@@ -295,10 +276,10 @@
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-starter-logging</artifactId>
                 </exclusion>
-                <!--    <exclusion>
-                       <groupId>org.springframework.boot</groupId>
-                       <artifactId>spring-boot-starter-tomcat</artifactId>
-                   </exclusion> -->
+             <!--    <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                </exclusion> -->
             </exclusions>
         </dependency>
         <dependency>

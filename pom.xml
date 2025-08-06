@@ -5,9 +5,9 @@
 
   <groupId>gov.nasa.jpl.ammos.kmc</groupId>
   <artifactId>asec-kmc</artifactId>
-  <version>3.7.0</version>
+  <version>4.0.0</version>
   <packaging>pom</packaging>
-  <name>ASEC Key Management and Cryptography (KMC)</name>
+  <name>AMMOS Data Cryptography Services (DCS)</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

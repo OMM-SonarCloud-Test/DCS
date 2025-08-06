@@ -10,9 +10,9 @@
     </parent>
     <groupId>gov.nasa.jpl.ammos.asec.kmc</groupId>
     <artifactId>kmc-sdls-service</artifactId>
-    <version>3.7.0</version>
+    <version>4.0.0</version>
     <name>kmc-sdls-service</name>
-    <description>KMC SDLS REST Service</description>
+    <description>DCS SDLS REST Service</description>
     <properties>
         <java.version>17</java.version>
         <log4j.version>2.24.2</log4j.version>

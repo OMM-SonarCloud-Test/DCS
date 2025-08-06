@@ -3,7 +3,7 @@
 # uncomment for debug
 #set -x
 
-echo "Compile and build KMC" 
+echo "Compile and build DCS"
 
 source $(dirname "$0")/setenv.sh
 
@@ -23,6 +23,7 @@ echo "----------------------------------------"
 echo "----------------------------------------"
 echo "AMMOS CryptoLib"
 echo "----------------------------------------"
+if [ -x /usr/bin/cmake ]; then
 cd $SRC_CRYPTO_LIB
 if [ -f CMakeCache.txt ]; then
   make clean
@@ -40,6 +41,9 @@ if [ $? != 0 ]; then
   exit 1
 fi
 make install >> make.out
+else
+  echo "Skip building CryptoLib as cmake not found"
+fi
 echo "----------------------------------------"
 
 cd $SRC_KMC; mvn -q clean
@@ -52,28 +56,28 @@ echo "----------------------------------------"
 cd $SRC_KMIP; mvn -q clean
 cd $SRC_KMIP; $MVN install -DDEFAULT_PREFIX="${PREFIX}" -DDEFAULT_BINPATH="${BINPATH}" -DDEFAULT_LIBPATH="${LIBPATH}" -DDEFAULT_CFGPATH="${CFGPATH}" -DDEFAULT_LOGPATH="${LOGPATH}"
 echo "----------------------------------------"
-echo "KMC Key Client Library"
+echo "DCS Key Client Library"
 echo "----------------------------------------"
 cd $SRC_KMC/kmc-key-client ; $MVN install -DDEFAULT_PREFIX="${PREFIX}" -DDEFAULT_BINPATH="${BINPATH}" -DDEFAULT_LIBPATH="${LIBPATH}" -DDEFAULT_CFGPATH="${CFGPATH}" -DDEFAULT_LOGPATH="${LOGPATH}"
 echo "----------------------------------------"
-echo "KMC Crypto Interface"
+echo "DCS Crypto Interface"
 echo "----------------------------------------"
 cd $SRC_KMC/kmc-crypto ; $MVN install -DDEFAULT_PREFIX="${PREFIX}" -DDEFAULT_BINPATH="${BINPATH}" -DDEFAULT_LIBPATH="${LIBPATH}" -DDEFAULT_CFGPATH="${CFGPATH}" -DDEFAULT_LOGPATH="${LOGPATH}"
 echo "----------------------------------------"
-echo "KMC Crypto Library"
+echo "DCS Crypto Library"
 echo "----------------------------------------"
 cd $SRC_KMC/kmc-crypto-library ; $MVN install -DDEFAULT_PREFIX="${PREFIX}" -DDEFAULT_BINPATH="${BINPATH}" -DDEFAULT_LIBPATH="${LIBPATH}" -DDEFAULT_CFGPATH="${CFGPATH}" -DDEFAULT_LOGPATH="${LOGPATH}"
 echo "----------------------------------------"
-echo "KMC Crypto Client"
+echo "DCS Crypto Client"
 echo "----------------------------------------"
 cd $SRC_KMC/kmc-crypto-client ; $MVN install -DDEFAULT_PREFIX="${PREFIX}" -DDEFAULT_BINPATH="${BINPATH}" -DDEFAULT_LIBPATH="${LIBPATH}" -DDEFAULT_CFGPATH="${CFGPATH}" -DDEFAULT_LOGPATH="${LOGPATH}"
 echo "----------------------------------------"
-echo "KMC Crypto Service"
+echo "DCS Crypto Service"
 echo "----------------------------------------"
 cd $SRC_KMC/kmc-crypto-service ; $MVN package -DDEFAULT_PREFIX="${CRYPTOSVC_PREFIX}" -DDEFAULT_BINPATH="${CRYPTOSVC_PREFIX}/bin" -DDEFAULT_LIBPATH="${CRYTPOSVC_LIBPATH}" -DDEFAULT_CFGPATH="${CRYPTOSVC_CFGPATH}" -DDEFAULT_LOGPATH="${CRYPTOSVC_LOGPATH}"
 
 echo "----------------------------------------"
-echo "KMC SDLS Service"
+echo "DCS SDLS Service"
 echo "----------------------------------------"
 cd $SRC_KMC/kmc-sdls-service
 export LD_LIBRARY_PATH=${SRC_CRYPTO_LIB}/build/lib
@@ -86,7 +90,7 @@ mvn eclipse:eclipse
 mvn -q package -DDEFAULT_PREFIX="${SDLSSVC_PREFIX}" -DDEFAULT_BINPATH="${SDLSSVC_PREFIX}/bin" -DDEFAULT_LIBPATH="${SDLSSVC_LIBPATH}" -DDEFAULT_CFGPATH="${SDLSSVC_CFGPATH}" -DDEFAULT_LOGPATH="${SDLSSVC_LOGPATH}"
 
 echo "----------------------------------------"
-echo "KMC SA Management"
+echo "DCS SA Management"
 echo "----------------------------------------"
 cd $SRC_KMC/kmc-sa-mgmt ; mvn -q package -DDEFAULT_PREFIX="${SAMGMTSVC_PREFIX}" -DDEFAULT_BINPATH="${SAMGMTSVC_PREFIX}/bin" -DDEFAULT_LIBPATH="${SAMGMTSVC_LIBPATH}" -DDEFAULT_CFGPATH="${SAMGMTSVC_CFGPATH}" -DDEFAULT_LOGPATH="${SAMGMTSVC_LOGPATH}" # will run the tests
 
@@ -95,12 +99,12 @@ if [ "$1" == "skip-test" ]; then
   cd $SRC_KMC/kmc-crypto-client ; mvn jar:test-jar
 else
   echo "----------------------------------------"
-  echo "KMC Crypto Library Tests"
+  echo "DCS Crypto Library Tests"
   echo "----------------------------------------"
   cd $SRC_KMC/kmc-crypto-library ; mvn test ; mvn jar:test-jar
 
   echo "----------------------------------------"
-  echo "KMC Crypto Client Tests"
+  echo "DCS Crypto Client Tests"
   echo "----------------------------------------"
   cd $SRC_KMC/kmc-crypto-client ; mvn test ; mvn jar:test-jar
 fi

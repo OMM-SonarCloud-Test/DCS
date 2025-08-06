@@ -6,13 +6,13 @@
   <groupId>gov.nasa.jpl.ammos.kmc</groupId>
   <artifactId>kmip-client</artifactId>
   <packaging>jar</packaging>
-  <version>3.7.0</version>
-  <name>KMIP Client</name>
+  <version>4.0.0</version>
+  <name>DCS KMIP Client</name>
 
   <parent>
     <groupId>gov.nasa.jpl.ammos.kmc</groupId>
     <artifactId>asec-kmc</artifactId>
-    <version>3.7.0</version>
+    <version>4.0.0</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
