@@ -94,16 +94,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-eclipse-plugin</artifactId>
-                <configuration>
-                    <downloadSources>true</downloadSources>
-                    <downloadJavadocs>true</downloadJavadocs>
-                </configuration>
-            </plugin>
-
         </plugins>
     </build>
 
@@ -209,16 +199,16 @@
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
         </dependency>
-    
-      <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bctls-fips</artifactId>
-      </dependency>
-    
-      <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bc-fips</artifactId>
-      </dependency>
+
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bctls-fips</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bc-fips</artifactId>
+        </dependency>
     </dependencies>
 
     <repositories>
