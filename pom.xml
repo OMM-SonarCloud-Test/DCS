@@ -25,7 +25,6 @@
     <module>kmc-key-client</module>
     <module>kmc-crypto</module>
     <module>kmc-crypto-library</module>
-    <module>kmc-crypto-client</module>
     <module>kmc-crypto-service</module>
     <module>kmc-sa-mgmt</module>
     <module>kmc-sdls-service</module>

@@ -26,7 +26,6 @@ import gov.nasa.jpl.ammos.kmc.crypto.KmcCryptoException.KmcCryptoErrorCode;
 import gov.nasa.jpl.ammos.kmc.crypto.KmcCryptoManager;
 import gov.nasa.jpl.ammos.kmc.crypto.KmcCryptoManagerException;
 import gov.nasa.jpl.ammos.kmc.crypto.KmcCryptoManagerException.KmcCryptoManagerErrorCode;
-import gov.nasa.jpl.ammos.kmc.crypto.client.CryptoServiceClient;
 import gov.nasa.jpl.ammos.kmc.crypto.library.KmcKeyServiceClient;
 import gov.nasa.jpl.ammos.kmc.crypto.model.CryptoServiceResponse;
 import gov.nasa.jpl.ammos.kmc.crypto.model.EncryptServiceResponse;
@@ -48,7 +47,7 @@ public class EncryptService extends HttpServlet {
 
     private final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 
-    private final int maxBytes = CryptoServiceClient.MAX_CRYPTO_SERVICE_BYTES;
+    private final int maxBytes = KmcCryptoServiceConfiguration.MAX_CRYPTO_SERVICE_BYTES;
     private static final int AES_BLOCK_SIZE = 16;  // AES block size in bytes
     private String kmcHome;
 
@@ -177,7 +176,6 @@ public class EncryptService extends HttpServlet {
 
         Encrypter encrypter;
         try {
-            cryptoManager.setUseCryptoService("false");
             encrypter = cryptoManager.createEncrypter(keyRef);
         } catch (KmcCryptoManagerException e) {
             String msg = "EncryptService: ";

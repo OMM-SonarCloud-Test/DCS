@@ -74,7 +74,6 @@ public class SymmetricEncryptionTest {
     public static void setUp() throws KmcCryptoManagerException {
         Security.addProvider(new BouncyCastleFipsProvider());
         cryptoManager = new KmcCryptoManager(null);
-        cryptoManager.setUseCryptoService("false");
     }
 
     private byte[] readFile(final File file) throws IOException {

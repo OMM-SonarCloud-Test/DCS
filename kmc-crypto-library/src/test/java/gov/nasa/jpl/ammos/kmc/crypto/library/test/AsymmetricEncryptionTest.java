@@ -56,9 +56,7 @@ public class AsymmetricEncryptionTest {
     public static void setUp() throws KmcCryptoManagerException {
         Security.addProvider(new BouncyCastleFipsProvider());
         cryptoManager = new KmcCryptoManager(null);
-        cryptoManager.setUseCryptoService("false");
         cryptoManagerChangedCipher = new KmcCryptoManager(null);
-        cryptoManagerChangedCipher.setUseCryptoService("false");
     }
 
     @Test

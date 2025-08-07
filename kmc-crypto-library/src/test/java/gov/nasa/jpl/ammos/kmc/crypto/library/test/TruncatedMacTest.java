@@ -67,7 +67,6 @@ public class TruncatedMacTest {
     @BeforeClass
     public static void setUp() throws KmcCryptoManagerException, UnsupportedEncodingException {
         cryptoManager = new KmcCryptoManager(null);
-        cryptoManager.setUseCryptoService("false");
 
         plaintext = new ByteArrayInputStream(TEST_STRING.getBytes("UTF-8"));
         aadPlaintext = new ByteArrayInputStream(AAD_TEST_STRING.getBytes("UTF-8"));
@@ -418,7 +417,6 @@ public class TruncatedMacTest {
         ByteArrayOutputStream eos = new ByteArrayOutputStream(AAD_TEST_LENGTH);
 
         KmcCryptoManager myCryptoManager = new KmcCryptoManager(null);
-        myCryptoManager.setUseCryptoService("false");
         myCryptoManager.setCipherTransformation(GCM_TRANSFORMATION);
 
         // encrypt with default tag size
@@ -457,7 +455,6 @@ public class TruncatedMacTest {
         ByteArrayOutputStream eos = new ByteArrayOutputStream(encryptedSize);
 
         KmcCryptoManager myCryptoManager = new KmcCryptoManager(null);
-        myCryptoManager.setUseCryptoService("false");
         myCryptoManager.setCipherTransformation(GCM_TRANSFORMATION);
 
         // encrypt with tag length longer than max
@@ -479,7 +476,6 @@ public class TruncatedMacTest {
         ByteArrayOutputStream eos = new ByteArrayOutputStream(AAD_TEST_LENGTH);
 
         KmcCryptoManager myCryptoManager = new KmcCryptoManager(null);
-        myCryptoManager.setUseCryptoService("false");
         myCryptoManager.setCipherTransformation(GCM_TRANSFORMATION);
 
         // encrypt with truncated tag length

@@ -61,7 +61,6 @@ public class AELibraryTest {
     @BeforeClass
     public static void setUp() throws KmcCryptoManagerException {
         cryptoManager = new KmcCryptoManager(null);
-        cryptoManager.setUseCryptoService("false");
         cryptoManager.setCipherTransformation(GCM_TRANSFORMATION);
         ClassLoader loader = AELibraryTest.class.getClassLoader();
         KEYSTORE_NAME = loader.getResource("symmetric-keys.jck").getFile();

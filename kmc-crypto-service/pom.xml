@@ -249,11 +249,6 @@
       <artifactId>kmc-crypto-library</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>gov.nasa.jpl.ammos.kmc</groupId>
-      <artifactId>kmc-crypto-client</artifactId>
-      <version>${project.version}</version>
-    </dependency>
 
     <dependency>
       <groupId>javax.servlet</groupId>
