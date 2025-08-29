@@ -250,23 +250,37 @@ class KmcSdlsClient:
                                                             ,cam_home_ffi)
 
         #Configure Managed Parameters
-        managed_parameter_regex = r'cryptolib\.tc\.(?P<scid>\d+)\.(?P<vcid>\d+)\.(?P<tfvn>\d+)\.has_ecf'
+        managed_parameter_regex = r'cryptolib\.(?P<f_type>tc|tm|aos)\.(?P<scid>\d+)\.(?P<vcid>\d+)\.(?P<tfvn>\d+)\.has_ecf'
         for key in config_dict:
             if("has_ecf" in key):
                 if ( not re.match(managed_parameter_regex,key) ):
-                    raise SdlsClientException(SdlsClientException.INVALID_MANAGED_PARAMETER_FORMAT,"Invalid Managed Parameter Format. Format must be 'cryptolib.tc.<scid>.<vcid>.<tfvn>.has_ecf=<bool>'")
+                    raise SdlsClientException(SdlsClientException.INVALID_MANAGED_PARAMETER_FORMAT,"Invalid Managed Parameter Format. Format must be 'cryptolib.<frame type>.<scid>.<vcid>.<tfvn>.has_ecf=<bool>'")
                 key_parts = key.split(".") #EG, cryptolib.tc.44.1.0.has_ecf
+                frame_type = key_parts[1]
                 managed_parameter_scid = key_parts[2]
                 managed_parameter_vcid = key_parts[3]
                 managed_parameter_tfvn = key_parts[4]
                 managed_parameter_has_ecf = distutils.util.strtobool(config_dict.get(key)) # ECF is required per managed parameter and has no default.
-                managed_parameter_max_frame_length = int(config_dict.get("cryptolib.tc."+managed_parameter_scid+"."+managed_parameter_vcid+"."+managed_parameter_tfvn+".max_frame_length", 1024))
+                managed_parameter_max_frame_length = int(config_dict.get("cryptolib."+frame_type+"."+managed_parameter_scid+"."+managed_parameter_vcid+"."+managed_parameter_tfvn+".max_frame_length", 1024))
+                managed_parameter_has_ecf_enum = managed_parameter_has_ecf
+                if frame_type != 'tc':
+                    if frame_type == 'tm':
+                        # see FecfPresent enum in CryptoLib's crypto_config_structs.h
+                        if managed_parameter_has_ecf:
+                            managed_parameter_has_ecf_enum = 3
+                        else:
+                            managed_parameter_has_ecf_enum = 2
+                    elif frame_type == 'aos':
+                        if managed_parameter_has_ecf:
+                            managed_parameter_has_ecf_enum = 5
+                        else:
+                            managed_parameter_has_ecf_enum = 4
                 # managed_parameter_vcid_bitmask = int(config_dict.get("cryptolib.tc."+managed_parameter_scid+"."+managed_parameter_vcid+"."+managed_parameter_tfvn+".vcid_bitmask", 0x3F),16)
-                managed_parameter_has_segmentation_header = distutils.util.strtobool(config_dict.get("cryptolib.tc."+managed_parameter_scid+"."+managed_parameter_vcid+"."+managed_parameter_tfvn+".has_segmentation_header", "false"))
+                managed_parameter_has_segmentation_header = distutils.util.strtobool(config_dict.get("cryptolib."+frame_type+"."+managed_parameter_scid+"."+managed_parameter_vcid+"."+managed_parameter_tfvn+".has_segmentation_header", "false"))
                 kmc_python_c_sdls_interface.lib.sdls_config_add_gvcid_managed_parameter(self.ffi.cast("uint8_t",managed_parameter_tfvn)
                                                                                         ,self.ffi.cast("uint16_t",int(managed_parameter_scid))
                                                                                         ,self.ffi.cast("uint8_t",int(managed_parameter_vcid))
-                                                                                        ,self.ffi.cast("uint8_t",managed_parameter_has_ecf)
+                                                                                        ,self.ffi.cast("uint8_t",managed_parameter_has_ecf_enum)
                                                                                         ,self.ffi.cast("uint8_t",managed_parameter_has_segmentation_header)
                                                                                         ,self.ffi.cast("uint16_t",int(managed_parameter_max_frame_length)))
 
@@ -385,7 +399,8 @@ class KmcSdlsClient:
         apply_security_result = kmc_python_c_sdls_interface.lib.apply_security_aos(aos_char_star_in, aos_len_in)
         if apply_security_result != SUCCESS:
             raise SdlsClientException(SdlsClientException.APPLY_SECURITY_EXCEPTION,"KMC CryptoLib Apply Security Exception.",apply_security_result)
-        return bytearray(self.ffi.buffer(aos_char_star_in[0],aos_len_in[0]))
+        buf = self.ffi.buffer(aos_char_star_in,int(aos_len_in))
+        return bytearray(buf)
 
     def process_security_aos(self,input_byte_array):
         '''
@@ -406,28 +421,33 @@ class KmcSdlsClient:
         aos_len = self.ffi.new("int *")
         aos_len[0] = len(aos_char)
         aos_result = self.ffi.new("AOS_t *") # Frame that will contain the processed SDLS fields
-        aos_result_len = self.ffi.new("int *")
-        process_security_result = kmc_python_c_sdls_interface.lib.process_security_aos(aos_char, aos_len, aos_result, aos_result_len)
+        aos_result_len = self.ffi.new("uint16_t *")
+        process_security_result = kmc_python_c_sdls_interface.lib.process_security_aos(aos_char, aos_len[0], aos_result, aos_result_len)
 
         if(process_security_result != SUCCESS):
             raise SdlsClientException(SdlsClientException.PROCESS_SECURITY_EXCEPTION,"KMC CryptoLib Process Security Exception.",process_security_result)
 
         aos_sdls_object = AOS(
-            AOS_FramePrimaryHeader(aos_result.tm_header.tfvn
-                                  , aos_result.tm_header.scid
-                                  , aos_result.tm_header.vcid
-                                  , aos_result.tm_header.vcfc
-                                  , aos_result.tm_header.rf
-                                  , aos_result.tm_header.sf
-                                  , aos_result.tm_header.spare
-                                  , aos_result.tm_header.vfcc
-                                  , aos_result.tm_header.fhec)
-            , FrameSecurityHeader(aos_result.tc_sec_header.spi
-                                     , self.c_array_to_bytearray(aos_result.tc_sec_header.iv,96) # IV length is always 96 bits
+            AOS_FramePrimaryHeader(aos_result.aos_header.tfvn
+                                  , aos_result.aos_header.scid
+                                  , aos_result.aos_header.vcid
+                                  , aos_result.aos_header.vcfc
+                                  , aos_result.aos_header.rf
+                                  , aos_result.aos_header.sf
+                                  , aos_result.aos_header.spare
+                                  , aos_result.aos_header.vfcc
+                                  , aos_result.aos_header.fhecf)
+            , FrameSecurityHeader(
+                0, #segment header
+                aos_result.aos_sec_header.spi,
+                self.c_array_to_bytearray(aos_result.aos_sec_header.iv,aos_result.aos_sec_header.iv_field_len), # IV length is always 16 bytes?
+                self.c_array_to_bytearray(aos_result.aos_sec_header.sn, aos_result.aos_sec_header.sn_field_len),
+                aos_result.aos_sec_header.pad
                                      )
             , self.c_array_to_bytearray(aos_result.aos_pdu,1786) # crypto_structs.h defines this as constant 1786?
-            , FrameSecurityTrailer(self.c_array_to_bytearray(aos_result.tc_sec_trailer.mac,128) #Using whole field length here -- only 128 bit macs are currently supported.
-                                      , aos_result.tc_sec_trailer.fecf) # CCSDS spec doesn't have an OCF here
+            , FrameSecurityTrailer(
+                self.c_array_to_bytearray(aos_result.aos_sec_trailer.mac,aos_result.aos_sec_trailer.mac_field_len), #Using whole field length here -- only 128 bit macs are currently supported.
+                aos_result.aos_sec_trailer.fecf) # CCSDS spec doesn't have an OCF here
         )
         self.ffi.release(aos_result)
         # Returning Python objects instead of the CFFI objects is somewhat inefficient. If performance becomes a problem, consider removing this nicety.
@@ -461,7 +481,8 @@ class KmcSdlsClient:
         apply_security_result = kmc_python_c_sdls_interface.lib.apply_security_tm(tm_char_star_in, tm_len_in)
         if apply_security_result != SUCCESS:
             raise SdlsClientException(SdlsClientException.APPLY_SECURITY_EXCEPTION,"KMC CryptoLib Apply Security Exception.",apply_security_result)
-        return bytearray(self.ffi.buffer(tm_char_star_in[0],tm_len_in[0]))
+        buf = self.ffi.buffer(tm_char_star_in,int(tm_len_in))
+        return bytearray(buf)
 
     def process_security_tm(self,input_byte_array):
         '''
@@ -481,9 +502,9 @@ class KmcSdlsClient:
         tm_char = self.ffi.from_buffer(in_copy, require_writable=True)
         tm_len = self.ffi.new("int *")
         tm_len[0] = len(tm_char)
-        tm_result = self.ffi.new("AOS_t *") # Frame that will contain the processed SDLS fields
-        tm_result_len = self.ffi.new("int *")
-        process_security_result = kmc_python_c_sdls_interface.lib.process_security_tm(tm_char, tm_len, tm_result, tm_result_len)
+        tm_result = self.ffi.new("TM_t *") # Frame that will contain the processed SDLS fields
+        tm_result_len = self.ffi.new("uint16_t *")
+        process_security_result = kmc_python_c_sdls_interface.lib.process_security_tm(tm_char, tm_len[0], tm_result, tm_result_len)
 
         if(process_security_result != SUCCESS):
             raise SdlsClientException(SdlsClientException.PROCESS_SECURITY_EXCEPTION,"KMC CryptoLib Process Security Exception.",process_security_result)
@@ -500,12 +521,16 @@ class KmcSdlsClient:
                                    , tm_result.tm_header.pof
                                    , tm_result.tm_header.slid
                                    , tm_result.tm_header.fhp)
-            , FrameSecurityHeader(tm_result.tc_sec_header.spi
-                                  , self.c_array_to_bytearray(tm_result.tc_sec_header.iv,96) # IV length is always 96 bits
+            , FrameSecurityHeader(
+                0, #sh
+                tm_result.tm_sec_header.spi,
+                self.c_array_to_bytearray(tm_result.tm_sec_header.iv,tm_result.tm_sec_header.iv_field_len),
+                self.c_array_to_bytearray(tm_result.tm_sec_header.sn, tm_result.tm_sec_header.sn_field_len),
+                tm_result.tm_sec_header.pad
                                   )
-            , self.c_array_to_bytearray(tm_result.aos_pdu,1786) # crypto_structs.h defines this as constant 1786?
-            , FrameSecurityTrailer(self.c_array_to_bytearray(tm_result.tc_sec_trailer.mac,128) #Using whole field length here -- only 128 bit macs are currently supported.
-                                   , tm_result.tc_sec_trailer.fecf) # CCSDS spec doesn't have an OCF here
+            , self.c_array_to_bytearray(tm_result.tm_pdu,tm_result.tm_pdu_len) # crypto_structs.h defines this as constant 1786?
+            , FrameSecurityTrailer(self.c_array_to_bytearray(tm_result.tm_sec_trailer.mac,tm_result.tm_sec_trailer.mac_field_len) #Using whole field length here -- only 128 bit macs are currently supported.
+                                   , tm_result.tm_sec_trailer.fecf) # CCSDS spec doesn't have an OCF here
         )
         self.ffi.release(tm_result)
         # Returning Python objects instead of the CFFI objects is somewhat inefficient. If performance becomes a problem, consider removing this nicety.
@@ -641,8 +666,9 @@ class SdlsClientException(Exception):
         '''
         error_message = ""
         enum_string = ""
+
         if(cryptolib_error_code!=0):
-            enum_string = kmc_python_c_sdls_interface.lib.sdls_get_error_code_enum_string(cryptolib_error_code)
+            enum_string = kmc_python_c_sdls_interface.ffi.string(kmc_python_c_sdls_interface.lib.sdls_get_error_code_enum_string(cryptolib_error_code)).decode('utf-8')
             error_message = " Error code: %d, %s"%(cryptolib_error_code,enum_string)
         Exception.__init__(self, message + error_message)
         self.error_code = error_code

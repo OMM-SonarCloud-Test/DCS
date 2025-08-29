@@ -161,10 +161,10 @@ class TC(Frame):
 
 class TM(Frame):
     def __init__(self):
-        self.vc_id = "001"        #  3 bit virtual channel id
-        self.sc_id = "0000101100" # 10 bit spacecraft id (44)
-        self.frame_body_hex = ""
-        self.frame_header_hex = ""
+        self.vc_id = "000"        #  3 bit virtual channel id
+        self.sc_id = "0011111111" # 10 bit spacecraft id (255)
+        self.frame_body_hex = "00000000000000000000000000001111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111100000000000000000000000000000000"
+        self.frame_header_hex = "4ff000000000"
         self.default_frame_hex = "{}{}".format(self.frame_header_hex, self.frame_body_hex)
 
     def to_hex(self):
@@ -189,9 +189,9 @@ class AOS(Frame):
 
     def __init__(self):
         self.vc_id = "000000"   #  6 bit virtual channel id
-        self.sc_id = "00101100" # 8 bit spacecraft id (44)
-        self.frame_body_hex = ""
-        self.frame_header_hex = "4b0000000000"
+        self.sc_id = "111111111" # 8 bit spacecraft id (255)
+        self.frame_body_hex = "00000000000000000000000000001111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111100000000000000000000000000000000"
+        self.frame_header_hex = "7fc000000000"
         self.default_frame_hex = "{}{}".format(self.frame_header_hex, self.frame_body_hex)
 
     def to_hex(self):
@@ -212,11 +212,11 @@ def main():
 
     if cli_args.type is not None:
         f_type = cli_args.type.upper()
-        if f_type is "TC":
+        if f_type == "TC":
             frame = TC()
-        elif f_type is "TM":
+        elif f_type == "TM":
             frame = TM()
-        elif f_type is "AOS":
+        elif f_type == "AOS":
             frame = AOS()
         else:
             raise ArgumentException("Frame type must be TC, TM, or AOS")
@@ -287,19 +287,48 @@ def main():
             fn = k.process_security_tm
         elif f_type == "AOS":
             fn = k.process_security_aos
-        reversed_tc = fn(result)
+        reversed_frame = fn(result)
 
-        print("SDLS TC Process Security Result:")
-        #print(reversed_tc)
-        print("SPI: ", reversed_tc.tc_security_header.spi)
-        if(len(reversed_tc.tc_security_header.iv) != 0):
-            print("IV: ", reversed_tc.tc_security_header.iv.to_hex())
-        if(len(reversed_tc.tc_security_header.sn) != 0):
-            print("SN: ", reversed_tc.tc_security_header.sn.to_hex())
-        print("PDU: ", reversed_tc.tc_pdu.to_hex())
-        print("MAC: ", reversed_tc.tc_security_trailer.mac.to_hex())
-        print("FECF: ", hex(reversed_tc.tc_security_trailer.fecf))
+        print("SDLS "+f_type+" Process Security Result:")
+        if f_type == 'TC':
+            print_tc(reversed_frame)
+        elif f_type == 'AOS':
+            print_aos(reversed_frame)
+        elif f_type == 'TM':
+            print_tm(reversed_frame)
 
+
+def print_tc(frame):
+    print("SPI: ", frame.tc_security_header.spi)
+    if(len(frame.tc_security_header.iv) != 0):
+        print("IV: ", frame.tc_security_header.iv.to_hex())
+    if(len(frame.tc_security_header.sn) != 0):
+        print("SN: ", frame.tc_security_header.sn.to_hex())
+    print("PDU: ", frame.tc_pdu.to_hex())
+    print("MAC: ", frame.tc_security_trailer.mac.to_hex())
+    print("FECF: ", hex(frame.tc_security_trailer.fecf))
+
+
+def print_aos(frame):
+    print("SPI: ", frame.aos_security_header.spi)
+    if(len(frame.aos_security_header.iv) != 0):
+        print("IV: ", frame.aos_security_header.iv.hex())
+    if(len(frame.aos_security_header.sn) != 0):
+        print("SN: ", frame.aos_security_header.sn.hex())
+    print("PDU: ", frame.aos_pdu.hex())
+    print("MAC: ", frame.aos_security_trailer.mac.hex())
+    print("FECF: ", hex(frame.aos_security_trailer.fecf))
+
+
+def print_tm(frame):
+    print("SPI: ", frame.tm_security_header.spi)
+    if(len(frame.tm_security_header.iv) != 0):
+        print("IV: ", frame.tm_security_header.iv.hex())
+    if(len(frame.tm_security_header.sn) != 0):
+        print("SN: ", frame.tm_security_header.sn.hex())
+    print("PDU: ", frame.tm_pdu.hex())
+    print("MAC: ", frame.tm_security_trailer.mac.hex())
+    print("FECF: ", hex(frame.tm_security_trailer.fecf))
 
 if __name__ == "__main__":
     try:
