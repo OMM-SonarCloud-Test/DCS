@@ -13,7 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/nasa-ammos/dcs/build-image/dcs-builder-ubuntu-20.04:2025.08.19
-      options: --mount type=bind,source=${{ github.workspace }}/build-output,target=/build-output
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
