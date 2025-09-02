@@ -76,8 +76,8 @@ if [ $? -ne 0 ]; then
   BUILD_FAILURES+=("KMIP Client Library")
   BUILD_FLAG=1
 else
-  mkdir -p /build-output/kmip-client
-  cp -r target/classes /build-output/kmip-client/
+  mkdir -p $SRC_KMC/build-output/kmip-client
+  cp -r target/classes $SRC_KMC/build-output/kmip-client/
 fi
 echo "----------------------------------------"
 echo "DCS Key Client Library"
@@ -88,8 +88,8 @@ if [ $? -ne 0 ]; then
   BUILD_FAILURES+=("DCS Key Client Library")
   BUILD_FLAG=1
 else
-  mkdir -p /build-output/kmc-key-client
-  cp -r target/classes /build-output/kmc-key-client/
+  mkdir -p $SRC_KMC/build-output/kmc-key-client
+  cp -r target/classes $SRC_KMC/build-output/kmc-key-client/
 fi
 echo "----------------------------------------"
 echo "DCS Crypto Interface"
@@ -100,8 +100,8 @@ if [ $? -ne 0 ]; then
   BUILD_FAILURES+=("DCS Crypto Interface")
   BUILD_FLAG=1
 else
-  mkdir -p /build-output/kmc-crypto
-  cp -r target/classes /build-output/kmc-crypto/
+  mkdir -p $SRC_KMC/build-output/kmc-crypto
+  cp -r target/classes $SRC_KMC/build-output/kmc-crypto/
 fi
 echo "----------------------------------------"
 echo "DCS Crypto Library"
@@ -112,8 +112,8 @@ if [ $? -ne 0 ]; then
   BUILD_FAILURES+=("DCS Crypto Library")
   BUILD_FLAG=1
 else
-  mkdir -p /build-output/kmc-crypto-library
-  cp -r target/classes /build-output/kmc-crypto-library/
+  mkdir -p $SRC_KMC/build-output/kmc-crypto-library
+  cp -r target/classes $SRC_KMC/build-output/kmc-crypto-library/
 fi
 echo "----------------------------------------"
 echo "DCS Crypto Service"
@@ -124,8 +124,8 @@ if [ $? -ne 0 ]; then
   BUILD_FAILURES+=("DCS Crypto Service")
   BUILD_FLAG=1
 else
-  mkdir -p /build-output/kmc-crypto-service
-  cp -r target/classes /build-output/kmc-crypto-service/
+  mkdir -p $SRC_KMC/build-output/kmc-crypto-service
+  cp -r target/classes $SRC_KMC/build-output/kmc-crypto-service/
 fi
 
 echo "----------------------------------------"
@@ -150,8 +150,8 @@ if [ $? -ne 0 ]; then
   BUILD_FAILURES+=("DCS SDLS Service package")
   BUILD_FLAG=1
 else
-  mkdir -p /build-output/kmc-sdls-service
-  cp -r target/classes /build-output/kmc-sdls-service/
+  mkdir -p $SRC_KMC/build-output/kmc-sdls-service
+  cp -r target/classes $SRC_KMC/build-output/kmc-sdls-service/
 fi
 
 echo "----------------------------------------"
@@ -165,8 +165,8 @@ if [ $? -ne 0 ]; then
 else
   echo "Copying compiled classes to shared volume..."
   for module in kmc-sa-db-api kmc-sa-db-lib kmc-sa-cli kmc-sa-gui; do
-    mkdir -p /build-output/kmc-sa-mgmt/$module
-    cp -r "$module/target/classes" "/build-output/kmc-sa-mgmt/$module/"
+    mkdir -p $SRC_KMC/build-output/kmc-sa-mgmt/$module
+    cp -r "$module/target/classes" "$SRC_KMC/build-output/kmc-sa-mgmt/$module/"
   done
 fi
 

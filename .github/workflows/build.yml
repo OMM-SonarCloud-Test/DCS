@@ -26,11 +26,14 @@ jobs:
           cd ./DCS
           export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
           ./kmc-resources/scripts/build.sh
+
+      - name: Verify build output
+        run: ls -R ./DCS/build-output/          
       - name: Upload compiled classes
         uses: actions/upload-artifact@v4.6.2
         with:
           name: compiled-classes
-          path: build-output/
+          path: ./DCS/build-output/
 
   # Build using rocky image
   dcs_build_rocky:
@@ -152,7 +155,10 @@ jobs:
         uses: actions/download-artifact@v5.0.0
         with:
           name: compiled-classes
-          path: build-output/
+          path: ./DCS/build-output/
+
+      - name: Verify downloaded classes
+        run: ls -R ./DCS/build-output/
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5.3.1
