@@ -33,7 +33,7 @@ jobs:
         uses: actions/upload-artifact@v4.6.2
         with:
           name: compiled-classes
-          path: ./DCS/build-output/
+          path: DCS/build-output/
 
   # Build using rocky image
   dcs_build_rocky:
@@ -155,10 +155,10 @@ jobs:
         uses: actions/download-artifact@v5.0.0
         with:
           name: compiled-classes
-          path: ./DCS/build-output/
+          path: build-output/
 
       - name: Verify downloaded classes
-        run: ls -R ./DCS/build-output/
+        run: ls -R build-output/
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5.3.1
