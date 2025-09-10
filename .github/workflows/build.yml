@@ -168,5 +168,5 @@ jobs:
         with:
           projectBaseDir: .
           args: >
-            -Dsonar.organization=nasa-ammos
-            -Dsonar.projectKey=NASA-AMMOS_KMC
+            -Dsonar.organization=omm-sonarcloud-test
+            -Dsonar.projectKey=OMM-SonarCloud-Test_DCS
