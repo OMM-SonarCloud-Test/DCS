@@ -12,7 +12,7 @@ jobs:
   dcs_build_ubuntu:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/nasa-ammos/dcs/build-image/dcs-builder-ubuntu-20.04:2025.08.19
+      image: ghcr.io/omm-sonarcloud-test/dcs/build-image/dcs-builder-ubuntu-20.04:2025.08.19
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -39,7 +39,7 @@ jobs:
   dcs_build_rocky:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/nasa-ammos/dcs/build-image/dcs-builder-rocky-9:2025.08.19
+      image: ghcr.io/omm-sonarcloud-test/dcs/build-image/dcs-builder-rocky-9:2025.08.19
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
