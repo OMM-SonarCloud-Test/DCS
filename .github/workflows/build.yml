@@ -141,7 +141,8 @@ jobs:
           done
 
           echo "RESULTS_DIR=$results_dir" >> $GITHUB_ENV
-
+          echo "Results generated: "
+          echo $results_dir
       # This step makes the analysis artifacts available for download
       # This can be helpful for debugging and archive purposes
       - name: Upload Artifacts
