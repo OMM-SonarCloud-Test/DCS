@@ -11,6 +11,8 @@ jobs:
   # Build using ubuntu image
   dcs_build_ubuntu:
     runs-on: ubuntu-latest
+    permissions:
+      packages: read
     container:
       image: ghcr.io/omm-sonarcloud-test/dcs/build-image/dcs-builder-ubuntu-20.04:2025.08.19
       credentials:
@@ -38,6 +40,8 @@ jobs:
   # Build using rocky image
   dcs_build_rocky:
     runs-on: ubuntu-latest
+    permissions:
+      packages: read
     container:
       image: ghcr.io/omm-sonarcloud-test/dcs/build-image/dcs-builder-rocky-9:2025.08.19
       credentials:
