@@ -161,10 +161,17 @@ jobs:
       - name: Verify downloaded classes
         run: ls -R build-output-for-sonar/
 
+      # Download SARIF files for Sonar scan
+      - name: Download SARIF Files
+        uses: actions/download-artifact@v5.0.0
+        with:
+          name: codeql-artifacts
+          path: codeql-artifacts-for-sonar/
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5.3.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
+          GITHUB_TOKEN: ${{ secrets.PACKAGE_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           projectBaseDir: .
