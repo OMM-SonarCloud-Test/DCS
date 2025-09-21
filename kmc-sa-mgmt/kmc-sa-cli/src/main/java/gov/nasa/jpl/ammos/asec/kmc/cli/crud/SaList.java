@@ -1,6 +1,6 @@
 package gov.nasa.jpl.ammos.asec.kmc.cli.crud;
 
-import gov.nasa.jpl.ammos.asec.kmc.api.sa.SecAssn;
+import gov.nasa.jpl.ammos.asec.kmc.api.sa.ISecAssn;
 import gov.nasa.jpl.ammos.asec.kmc.api.sadb.IKmcDao;
 import gov.nasa.jpl.ammos.asec.kmc.cli.misc.Version;
 import gov.nasa.jpl.ammos.asec.kmc.format.IOutput;
@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 /**
  * List Security Assocations
- *
  */
 @CommandLine.Command(name = "list", description = "List security associations", mixinStandardHelpOptions = true,
         versionProvider = Version.class)
@@ -49,42 +48,48 @@ public class SaList extends BaseCliApp {
     @Override
     public Integer call() throws Exception {
         try (IKmcDao dao = getDao()) {
-            List<SecAssn> sas = null;
+            List<ISecAssn> sas = null;
             if (filter != null) {
                 if (filter.activeOnly) {
-                    sas = dao.getSas().stream().filter(secAssn -> secAssn.getSaState() == 3).collect(Collectors.toList());
+                    sas = dao.getSas(frameType).stream().filter(secAssn -> secAssn.getSaState() == 3).collect(Collectors.toList());
                 } else if (filter.inactiveOnly) {
-                    sas = dao.getSas().stream().filter(secAssn -> secAssn.getSaState() != 3).collect(Collectors.toList());
+                    sas = dao.getSas(frameType).stream().filter(secAssn -> secAssn.getSaState() != 3).collect(Collectors.toList());
                 }
             } else {
-                sas = dao.getSas();
+                sas = dao.getSas(frameType);
             }
-            if (spi != null) {
-                sas = sas.stream().filter(secAssn -> secAssn.getSpi().equals(spi)).collect(Collectors.toList());
+            if (spi != null && sas != null) {
+                sas = sas.stream().filter(secAssn -> secAssn.getSpi().equals(spi)).toList();
             }
-            if (scid != null) {
-                sas = sas.stream().filter(secAssn -> secAssn.getScid().equals(scid)).collect(Collectors.toList());
-            }
-
-            IOutput out = null;
-            if (output != null) {
-                if (output.extended) {
-                    out = new SaCsvOutput(true);
-                } else if (output.json) {
-                    out = new SaJsonOutput();
-                } else if (output.mysql) {
-                    out = new SaMysqlOutput();
-                }
-            } else {
-                out = new SaCsvOutput(false);
+            if (scid != null && sas != null) {
+                sas = sas.stream().filter(secAssn -> secAssn.getScid().equals(scid)).toList();
             }
 
+            IOutput out = getOutput();
             out.print(spec.commandLine().getOut(), sas);
         }
 
         return 0;
     }
 
+    private IOutput getOutput() {
+        if (output != null) {
+            if (output.extended) {
+                return new SaCsvOutput(true);
+            } else if (output.json) {
+                return new SaJsonOutput();
+            } else if (output.mysql) {
+                return new SaMysqlOutput();
+            }
+        }
+        return new SaCsvOutput(false);
+    }
+
+    /**
+     * Main
+     *
+     * @param args args
+     */
     public static void main(String... args) {
         int exitCode = new CommandLine(new SaList()).execute(args);
         System.exit(exitCode);

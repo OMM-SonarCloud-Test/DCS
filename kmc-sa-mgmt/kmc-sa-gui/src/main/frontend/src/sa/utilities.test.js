@@ -14,7 +14,8 @@
 /**
  * @author panjames
  */
-const utilities = require('./utilities')
+import * as utilities from './utilities.js'
+import {expect, test} from "vitest";
 
 test('test state lookup', () => {
     expect(utilities.stateLookupInt(1)).toBe('Unkeyed | Expired')
@@ -39,12 +40,12 @@ test('test service type lookup', () => {
 test('test enc cipher hex lookup', () => {
     expect(utilities.hexEncLookup()).toBe('')
     expect(utilities.hexEncLookup('')).toBe('')
-    expect(utilities.hexEncLookup('0x00')).toBe('None')
-    expect(utilities.hexEncLookup('0x01')).toBe('AES256-GCM')
+    expect(utilities.hexEncLookup('0x00').name).toBe('None')
+    expect(utilities.hexEncLookup('0x01').name).toBe('AES256-GCM')
     expect(utilities.hexEncLookup('0x02')).toBe('0x02')
     expect(utilities.hexEncLookup('0x')).toBe('0x')
-    expect(utilities.hexEncLookup('0x00')).toBe('None')
-    expect(utilities.hexEncLookup('0x01')).toBe('AES256-GCM')
+    expect(utilities.hexEncLookup('0x00').name).toBe('None')
+    expect(utilities.hexEncLookup('0x01').name).toBe('AES256-GCM')
     expect(utilities.hexEncLookup('0x02')).toBe('0x02')
     expect(utilities.hexAuthLookup('hi there')).toBe('')
 })
@@ -52,16 +53,16 @@ test('test enc cipher hex lookup', () => {
 test('test auth cipher hex lookup', () => {
     expect(utilities.hexAuthLookup()).toBe('')
     expect(utilities.hexAuthLookup('')).toBe('')
-    expect(utilities.hexAuthLookup('00')).toBe('None')
-    expect(utilities.hexAuthLookup('01')).toBe('MAC-AES256')
-    expect(utilities.hexAuthLookup('02')).toBe('MAC-SHA256')
-    expect(utilities.hexAuthLookup('03')).toBe('MAC-SHA512')
+    expect(utilities.hexAuthLookup('00').name).toBe('None')
+    expect(utilities.hexAuthLookup('01').name).toBe('AES256-CMAC')
+    expect(utilities.hexAuthLookup('02').name).toBe('HMAC-SHA256')
+    expect(utilities.hexAuthLookup('03').name).toBe('HMAC-SHA512')
     expect(utilities.hexAuthLookup('04')).toBe('04')
     expect(utilities.hexAuthLookup('0x')).toBe('0x')
-    expect(utilities.hexAuthLookup('0x00')).toBe('None')
-    expect(utilities.hexAuthLookup('0x01')).toBe('MAC-AES256')
-    expect(utilities.hexAuthLookup('0x02')).toBe('MAC-SHA256')
-    expect(utilities.hexAuthLookup('0x03')).toBe('MAC-SHA512')
+    expect(utilities.hexAuthLookup('0x00').name).toBe('None')
+    expect(utilities.hexAuthLookup('0x01').name).toBe('AES256-CMAC')
+    expect(utilities.hexAuthLookup('0x02').name).toBe('HMAC-SHA256')
+    expect(utilities.hexAuthLookup('0x03').name).toBe('HMAC-SHA512')
     expect(utilities.hexAuthLookup('0x04')).toBe('0x04')
     expect(utilities.hexAuthLookup('hi there')).toBe('')
 })

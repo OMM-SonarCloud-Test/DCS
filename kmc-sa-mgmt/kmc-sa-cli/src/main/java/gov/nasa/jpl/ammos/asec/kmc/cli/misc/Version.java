@@ -8,13 +8,24 @@ import java.util.Properties;
 
 /**
  * Software version provider
- *
  */
 public class Version implements CommandLine.IVersionProvider {
-    private static final String VERSION_FILE = "version.properties";
-    private static final String VERSION_PROPERTY_KEY = "version";
-    private static final Properties properties = loadProperties();
-    private static final String VERSION = initializeVersion();
+    /**
+     * Version file
+     */
+    private static final String     VERSION_FILE         = "version.properties";
+    /**
+     * Version property key
+     */
+    private static final String     VERSION_PROPERTY_KEY = "version";
+    /**
+     * Properties
+     */
+    private static final Properties properties           = loadProperties();
+    /**
+     * Version constant
+     */
+    private static final String     VERSION              = initializeVersion();
 
     private static Properties loadProperties() {
         Properties props = new Properties();

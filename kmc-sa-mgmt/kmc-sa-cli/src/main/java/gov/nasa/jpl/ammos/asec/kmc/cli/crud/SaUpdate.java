@@ -1,7 +1,7 @@
 package gov.nasa.jpl.ammos.asec.kmc.cli.crud;
 
 import gov.nasa.jpl.ammos.asec.kmc.api.ex.KmcException;
-import gov.nasa.jpl.ammos.asec.kmc.api.sa.SecAssn;
+import gov.nasa.jpl.ammos.asec.kmc.api.sa.ISecAssn;
 import gov.nasa.jpl.ammos.asec.kmc.api.sa.SecAssnValidator;
 import gov.nasa.jpl.ammos.asec.kmc.api.sa.SpiScid;
 import gov.nasa.jpl.ammos.asec.kmc.api.sadb.IDbSession;
@@ -20,7 +20,6 @@ import java.util.List;
 
 /**
  * Update a Security Assocation
- *
  */
 @CommandLine.Command(name = "update", description = "Update an existing Security Association",
         mixinStandardHelpOptions = true, versionProvider = Version.class)
@@ -52,12 +51,12 @@ public class SaUpdate extends BaseCreateUpdate {
 
     protected void doSingle() throws KmcException {
         try (IKmcDao dao = getDao()) {
-            SpiScid id = new SpiScid(spi, scid);
-            SecAssn sa = dao.getSa(id);
+            SpiScid  id = new SpiScid(spi, scid);
+            ISecAssn sa = dao.getSa(id, frameType);
             if (sa == null) {
-                error(String.format("SA %d/%d doesn't exist, can't update", id.getSpi(), id.getScid()));
+                error(String.format("%s SA %d/%d doesn't exist, can't update", frameType, id.getSpi(), id.getScid()));
             }
-            console(String.format("%s updating SA", user));
+            console(String.format("%s updating %s SA", user, frameType));
 
             if (tfvn != null) {
                 sa.setTfvn(tfvn);
@@ -85,7 +84,8 @@ public class SaUpdate extends BaseCreateUpdate {
                 throw new KmcException(e);
             }
 
-            console(String.format("%s updated SA %s/%s", user, sa.getId().getSpi(), sa.getId().getScid()));
+            console(String.format("%s updated %s SA %s/%s", user, frameType, sa.getId().getSpi(),
+                    sa.getId().getScid()));
         }
     }
 
@@ -95,27 +95,33 @@ public class SaUpdate extends BaseCreateUpdate {
             throwEx(String.format("File does not exist: %s", file));
         }
         try (Reader reader = new FileReader(file)) {
-            List<SecAssn> sas = input.parseCsv(reader);
+            List<ISecAssn> sas = input.parseCsv(reader, frameType);
             try (IKmcDao dao = getDao()) {
-                for (SecAssn sa : sas) {
+                for (ISecAssn sa : sas) {
                     try {
-                        SecAssn check = dao.getSa(sa.getId());
+                        ISecAssn check = dao.getSa(sa.getId(), frameType);
                         if (check == null) {
-                            warn(String.format("SA %d/%d does not exist, skipping", sa.getSpi(), sa.getScid()));
+                            warn(String.format("%s SA %d/%d does not exist, skipping", frameType, sa.getSpi(),
+                                    sa.getScid()));
                             continue;
                         }
                         SecAssnValidator.validate(sa);
-                        console(String.format("%s updating SA %d/%d", user, sa.getSpi(), sa.getScid()));
+                        console(String.format("%s updating %s SA %d/%d", user, frameType, sa.getSpi(), sa.getScid()));
                         dao.updateSa(sa);
                     } catch (KmcException e) {
                         error(e.getMessage());
                     }
-                    console(String.format("%s updated SA %d/%d", user, sa.getSpi(), sa.getScid()));
+                    console(String.format("%s updated %s SA %d/%d", user, frameType, sa.getSpi(), sa.getScid()));
                 }
             }
         }
     }
 
+    /**
+     * Main
+     *
+     * @param args args
+     */
     public static void main(String... args) {
         int exit = new CommandLine(new SaUpdate()).execute(args);
         System.exit(exit);
@@ -136,7 +142,8 @@ public class SaUpdate extends BaseCreateUpdate {
                         checkEncParams(args.single.optionalArgs.ekid, args.single.optionalArgs.ecs);
                         checkAuthParams(args.single.optionalArgs.akid, args.single.optionalArgs.acs);
                         checkSt(args.single.optionalArgs.st);
-                        checkIvParams(args.single.optionalArgs.iv, args.single.optionalArgs.ivLen, args.single.optionalArgs.st, args.single.optionalArgs.ecs );
+                        checkIvParams(args.single.optionalArgs.iv, args.single.optionalArgs.ivLen,
+                                args.single.optionalArgs.st, args.single.optionalArgs.ecs);
                         checkArsnParams(args.single.optionalArgs.arsn, args.single.optionalArgs.arsnlen);
                         checkArsnWParams(args.single.optionalArgs.arsnw);
                         checkAbmParams(args.single.optionalArgs.abm, args.single.optionalArgs.abmLen);

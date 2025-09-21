@@ -24,7 +24,6 @@ import gov.nasa.jpl.ammos.kmc.crypto.KmcCryptoException;
 import gov.nasa.jpl.ammos.kmc.crypto.KmcCryptoManager;
 import gov.nasa.jpl.ammos.kmc.crypto.KmcCryptoManagerException;
 import gov.nasa.jpl.ammos.kmc.crypto.KmcCryptoManagerException.KmcCryptoManagerErrorCode;
-import gov.nasa.jpl.ammos.kmc.crypto.client.CryptoServiceClient;
 import gov.nasa.jpl.ammos.kmc.crypto.library.KmcKeyServiceClient;
 import gov.nasa.jpl.ammos.kmc.crypto.model.CryptoServiceResponse;
 import gov.nasa.jpl.ammos.kmc.crypto.model.IcvCreateServiceResponse;
@@ -46,7 +45,7 @@ public class IcvCreateService extends HttpServlet {
 
     private final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 
-    private final int maxBytes = CryptoServiceClient.MAX_CRYPTO_SERVICE_BYTES;
+    private final int maxBytes = KmcCryptoServiceConfiguration.MAX_CRYPTO_SERVICE_BYTES;
     private String kmcHome;
 
     @Override
@@ -161,7 +160,6 @@ public class IcvCreateService extends HttpServlet {
 
         IcvCreator icvCreator;
         try {
-            cryptoManager.setUseCryptoService("false");
             if (keyRef == null || "null".equals(keyRef)) {
                 icvCreator = cryptoManager.createIcvCreator();
             } else {

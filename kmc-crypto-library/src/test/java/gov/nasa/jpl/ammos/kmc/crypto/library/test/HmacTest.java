@@ -53,7 +53,6 @@ public class HmacTest {
     @BeforeClass
     public static void setUp() throws KmcCryptoManagerException {
         cryptoManager = new KmcCryptoManager(null);
-        cryptoManager.setUseCryptoService("false");
     }
 
     @Test

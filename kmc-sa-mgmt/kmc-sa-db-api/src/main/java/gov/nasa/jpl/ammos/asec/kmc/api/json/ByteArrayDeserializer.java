@@ -1,6 +1,5 @@
 package gov.nasa.jpl.ammos.asec.kmc.api.json;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -10,9 +9,12 @@ import org.apache.commons.codec.binary.Hex;
 
 import java.io.IOException;
 
+/**
+ * Deserializes byte arrays to hex strings for JSON
+ */
 public class ByteArrayDeserializer extends JsonDeserializer<byte[]> {
     @Override
-    public byte[] deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+    public byte[] deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         try {
             return Hex.decodeHex(p.getText());
         } catch (DecoderException e) {

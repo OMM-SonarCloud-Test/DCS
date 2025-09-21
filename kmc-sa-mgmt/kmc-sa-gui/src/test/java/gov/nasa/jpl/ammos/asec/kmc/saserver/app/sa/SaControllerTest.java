@@ -5,7 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import gov.nasa.jpl.ammos.asec.kmc.api.ex.KmcException;
-import gov.nasa.jpl.ammos.asec.kmc.api.sa.SecAssn;
+import gov.nasa.jpl.ammos.asec.kmc.api.sa.FrameType;
+import gov.nasa.jpl.ammos.asec.kmc.api.sa.ISecAssn;
 import gov.nasa.jpl.ammos.asec.kmc.api.sa.ServiceType;
 import gov.nasa.jpl.ammos.asec.kmc.api.sa.SpiScid;
 import gov.nasa.jpl.ammos.asec.kmc.sadb.BaseH2Test;
@@ -57,6 +58,21 @@ public class SaControllerTest extends BaseH2Test {
     public void testGetSas() {
         ArrayNode resp = restTemplate.getForObject(getUrl(), ArrayNode.class);
         assertNotNull(resp);
+        assertEquals(15, resp.size());
+    }
+
+    @Test
+    public void testGetSasByType() {
+        testGetSasByType("tc");
+        testGetSasByType("tm");
+        testGetSasByType("aos");
+
+    }
+
+    private void testGetSasByType(String type) {
+        ArrayNode resp = restTemplate.getForObject(getUrl() + "/" + type, ArrayNode.class);
+        assertNotNull(resp);
+        assertEquals(5, resp.size());
     }
 
     private String getUrl() {
@@ -77,6 +93,67 @@ public class SaControllerTest extends BaseH2Test {
     }
 
     @Test
+    public void testCreateSaByType() throws KmcException {
+        createSaByType(FrameType.TC);
+        createSaByType(FrameType.TM);
+        createSaByType(FrameType.AOS);
+    }
+
+    public void createSaByType(FrameType type) throws KmcException {
+        ObjectNode node = createSaJson();
+        node.put("type", type.name());
+        HttpEntity<JsonNode> req = new HttpEntity<>(node);
+
+        ResponseEntity<ObjectNode> resp = restTemplate.exchange(getUrl(),
+                HttpMethod.PUT, req, ObjectNode.class, new Object[0]);
+        assertNotNull(resp);
+        ObjectNode body       = resp.getBody();
+        JsonNode   statusNode = body.get("status");
+        if (statusNode != null) {
+            String status = statusNode.asText();
+            assertNotEquals("error", status);
+        }
+        assertEquals(100, body.get("spi").asInt());
+        assertEquals(46, body.get("scid").asInt());
+
+        ISecAssn created = dao.getSa(new SpiScid(100, (short) 46), type);
+        assertNotNull(created);
+        assertArrayEquals(new byte[]{0x00}, created.getAcs());
+        assertArrayEquals(new byte[]{(byte) 0xff,
+                (byte) 0xff,
+                (byte) 0xff,
+                (byte) 0xff,
+                (byte) 0xff,
+                (byte) 0xff,
+                (byte) 0xff,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00}, created.getAbm());
+        assertArrayEquals(new byte[]{0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x01}, created.getIv());
+        assertEquals(type, created.getType());
+    }
+
+    @Test
     public void testCreateSa() throws KmcException {
         ObjectNode           node = createSaJson();
         HttpEntity<JsonNode> req  = new HttpEntity<>(node);
@@ -87,13 +164,13 @@ public class SaControllerTest extends BaseH2Test {
         ObjectNode body       = resp.getBody();
         JsonNode   statusNode = body.get("status");
         if (statusNode != null) {
-            int status = statusNode.asInt();
-            assertFalse(status > 200);
+            String status = statusNode.asText();
+            assertNotEquals("error", status);
         }
         assertEquals(100, body.get("spi").asInt());
         assertEquals(46, body.get("scid").asInt());
 
-        SecAssn created = dao.getSa(new SpiScid(100, (short) 46));
+        ISecAssn created = dao.getSa(new SpiScid(100, (short) 46), FrameType.TC);
         assertNotNull(created);
         assertArrayEquals(new byte[]{0x00}, created.getAcs());
         assertArrayEquals(new byte[]{(byte) 0xff,
@@ -130,6 +207,56 @@ public class SaControllerTest extends BaseH2Test {
     }
 
     @Test
+    public void testUpdateSaByType() throws KmcException {
+        updateSaByType(FrameType.TC);
+        updateSaByType(FrameType.TM);
+        updateSaByType(FrameType.AOS);
+    }
+
+    public void updateSaByType(FrameType type) throws KmcException {
+        createSaByType(type);
+        ObjectNode node = createSaJson();
+        node.put("type", type.name());
+        node.put("tfvn", 1).put("est", 0).put("ast", 0).put("serviceType", "PLAINTEXT");
+
+        ObjectNode body = restTemplate.postForObject(getUrl(), node, ObjectNode.class);
+
+        assertEquals(1, body.get("tfvn").asInt());
+        assertEquals("PLAINTEXT", body.get("serviceType").asText());
+        assertEquals(0, body.get("est").asInt());
+        assertEquals(0, body.get("ast").asInt());
+        assertEquals(type.name(), body.get("type").asText());
+
+        ISecAssn updated = dao.getSa(new SpiScid(100, (short) 46), type);
+        assertEquals(1, updated.getTfvn().intValue());
+        assertEquals(ServiceType.PLAINTEXT, updated.getServiceType());
+        assertEquals(0, (short) updated.getEst());
+        assertEquals(0, (short) updated.getAst());
+        assertEquals(type, updated.getType());
+
+        node.put("saState", 2);
+        body = restTemplate.postForObject(getUrl(), node, ObjectNode.class);
+        assertEquals(2, body.get("saState").asInt());
+
+        node.put("saState", 3);
+        body = restTemplate.postForObject(getUrl(), node, ObjectNode.class);
+        assertEquals(3, body.get("saState").asInt());
+
+        node.put("saState", 1);
+        body = restTemplate.postForObject(getUrl(), node, ObjectNode.class);
+        assertEquals(1, body.get("saState").asInt());
+
+        body = restTemplate.postForObject(getUrl() + "/start", node, ObjectNode.class);
+        assertEquals(3, body.get("saState").asInt());
+
+        body = restTemplate.postForObject(getUrl() + "/stop", node, ObjectNode.class);
+        assertEquals(2, body.get("saState").asInt());
+
+        body = restTemplate.postForObject(getUrl() + "/expire", node, ObjectNode.class);
+        assertEquals(1, body.get("saState").asInt());
+    }
+
+    @Test
     public void testUpdateSa() throws KmcException {
         testCreateSa();
         ObjectNode node = createSaJson();
@@ -142,7 +269,7 @@ public class SaControllerTest extends BaseH2Test {
         assertEquals(0, body.get("est").asInt());
         assertEquals(0, body.get("ast").asInt());
 
-        SecAssn updated = dao.getSa(new SpiScid(100, (short) 46));
+        ISecAssn updated = dao.getSa(new SpiScid(100, (short) 46), FrameType.TC);
         assertEquals(1, updated.getTfvn().intValue());
         assertEquals(ServiceType.PLAINTEXT, updated.getServiceType());
         assertEquals(0, (short) updated.getEst());
@@ -171,6 +298,62 @@ public class SaControllerTest extends BaseH2Test {
     }
 
     @Test
+    public void testUpdateSaUnkeyedEncryptedByType() throws KmcException {
+        updateSaUnkeyedEncryptedByType(FrameType.TC);
+        updateSaUnkeyedEncryptedByType(FrameType.TM);
+        updateSaUnkeyedEncryptedByType(FrameType.AOS);
+    }
+
+    public void updateSaUnkeyedEncryptedByType(FrameType type) throws KmcException {
+        createSaByType(type);
+        ObjectNode node = createSaJson();
+        node.put("type", type.name());
+        node.put("tfvn", 1).put("est", 0).put("ast", 0).put("serviceType", "ENCRYPTION");
+
+        ObjectNode body = restTemplate.postForObject(getUrl(), node, ObjectNode.class);
+
+        assertEquals(1, body.get("tfvn").asInt());
+        assertEquals("ENCRYPTION", body.get("serviceType").asText());
+        assertEquals(1, body.get("est").asInt());
+        assertEquals(0, body.get("ast").asInt());
+        assertEquals(type.name(), body.get("type").asText());
+
+        ISecAssn updated = dao.getSa(new SpiScid(100, (short) 46), type);
+        assertEquals(type, updated.getType());
+        assertEquals(1, updated.getTfvn().intValue());
+        assertEquals(ServiceType.ENCRYPTION, updated.getServiceType());
+        assertEquals(1, (short) updated.getEst());
+        assertEquals(0, (short) updated.getAst());
+
+        node.put("saState", 2);
+        body = restTemplate.postForObject(getUrl(), node, ObjectNode.class);
+        assertEquals(2, body.get("saState").asInt());
+
+        node.put("saState", 3);
+        body = restTemplate.postForObject(getUrl(), node, ObjectNode.class);
+        assertEquals(3, body.get("saState").asInt());
+
+        node.put("saState", 1);
+        body = restTemplate.postForObject(getUrl(), node, ObjectNode.class);
+        assertEquals(1, body.get("saState").asInt());
+
+        body = restTemplate.postForObject(getUrl() + "/start", node, ObjectNode.class);
+        assertEquals(3, body.get("saState").asInt());
+
+        body = restTemplate.postForObject(getUrl() + "/stop", node, ObjectNode.class);
+        assertEquals(2, body.get("saState").asInt());
+
+        body = restTemplate.postForObject(getUrl() + "/expire", node, ObjectNode.class);
+        assertEquals(1, body.get("saState").asInt());
+
+        node.put("iv", "00000000000000000000000000000001");
+        node.put("ivLen", "16");
+        node.put("ekid", "null");
+        body = restTemplate.postForObject(getUrl(), node, ObjectNode.class);
+        assertNotNull(body);
+    }
+
+    @Test
     public void testUpdateSaUnkeyedEncrypted() throws KmcException {
         testCreateSa();
         ObjectNode node = createSaJson();
@@ -183,11 +366,69 @@ public class SaControllerTest extends BaseH2Test {
         assertEquals(1, body.get("est").asInt());
         assertEquals(0, body.get("ast").asInt());
 
-        SecAssn updated = dao.getSa(new SpiScid(100, (short) 46));
+        ISecAssn updated = dao.getSa(new SpiScid(100, (short) 46), FrameType.TC);
         assertEquals(1, updated.getTfvn().intValue());
         assertEquals(ServiceType.ENCRYPTION, updated.getServiceType());
         assertEquals(1, (short) updated.getEst());
         assertEquals(0, (short) updated.getAst());
+
+        node.put("saState", 2);
+        body = restTemplate.postForObject(getUrl(), node, ObjectNode.class);
+        assertEquals(2, body.get("saState").asInt());
+
+        node.put("saState", 3);
+        body = restTemplate.postForObject(getUrl(), node, ObjectNode.class);
+        assertEquals(3, body.get("saState").asInt());
+
+        node.put("saState", 1);
+        body = restTemplate.postForObject(getUrl(), node, ObjectNode.class);
+        assertEquals(1, body.get("saState").asInt());
+
+        body = restTemplate.postForObject(getUrl() + "/start", node, ObjectNode.class);
+        assertEquals(3, body.get("saState").asInt());
+
+        body = restTemplate.postForObject(getUrl() + "/stop", node, ObjectNode.class);
+        assertEquals(2, body.get("saState").asInt());
+
+        body = restTemplate.postForObject(getUrl() + "/expire", node, ObjectNode.class);
+        assertEquals(1, body.get("saState").asInt());
+
+        node.put("iv", "00000000000000000000000000000001");
+        node.put("ivLen", "16");
+        node.put("ekid", "null");
+        body = restTemplate.postForObject(getUrl(), node, ObjectNode.class);
+        assertNotNull(body);
+    }
+
+    @Test
+    public void testUpdateSaUnkeyedAuthByType() throws KmcException {
+        updateSaUnkeyedAuthByType(FrameType.TC);
+        updateSaUnkeyedAuthByType(FrameType.TM);
+        updateSaUnkeyedAuthByType(FrameType.AOS);
+    }
+
+    public void updateSaUnkeyedAuthByType(FrameType type) throws KmcException {
+        createSaByType(type);
+        ObjectNode node = createSaJson();
+        node.put("tfvn", 1).put("est", 0).put("ast", 0).put("serviceType", "AUTHENTICATION").put("acs", "01");
+        node.putNull("ekid");
+        node.put("akid", "kmc/test/key129");
+        node.put("type", type.name());
+
+        ObjectNode body = restTemplate.postForObject(getUrl(), node, ObjectNode.class);
+
+        assertEquals(1, body.get("tfvn").asInt());
+        assertEquals("AUTHENTICATION", body.get("serviceType").asText());
+        assertEquals(0, body.get("est").asInt());
+        assertEquals(1, body.get("ast").asInt());
+        assertEquals(type.name(), body.get("type").asText());
+
+        ISecAssn updated = dao.getSa(new SpiScid(100, (short) 46), type);
+        assertEquals(1, updated.getTfvn().intValue());
+        assertEquals(ServiceType.AUTHENTICATION, updated.getServiceType());
+        assertEquals(0, (short) updated.getEst());
+        assertEquals(1, (short) updated.getAst());
+        assertEquals(type, updated.getType());
 
         node.put("saState", 2);
         body = restTemplate.postForObject(getUrl(), node, ObjectNode.class);
@@ -232,7 +473,7 @@ public class SaControllerTest extends BaseH2Test {
         assertEquals(0, body.get("est").asInt());
         assertEquals(1, body.get("ast").asInt());
 
-        SecAssn updated = dao.getSa(new SpiScid(100, (short) 46));
+        ISecAssn updated = dao.getSa(new SpiScid(100, (short) 46), FrameType.TC);
         assertEquals(1, updated.getTfvn().intValue());
         assertEquals(ServiceType.AUTHENTICATION, updated.getServiceType());
         assertEquals(0, (short) updated.getEst());
@@ -267,6 +508,40 @@ public class SaControllerTest extends BaseH2Test {
     }
 
     @Test
+    public void testResetArsnByType() throws KmcException {
+        resetArsnByType(FrameType.TC);
+        resetArsnByType(FrameType.TM);
+        resetArsnByType(FrameType.AOS);
+    }
+
+    public void resetArsnByType(FrameType type) throws KmcException {
+        createSaByType(type);
+        ObjectNode idArsn = mapper.createObjectNode();
+        idArsn.withObject("/id").put("spi", 100).put("scid", 46);
+        idArsn.put("arsnLen", 8).put("arsn", "0000000000000001").put("arsnw", 10);
+        idArsn.put("type", type.name());
+        ObjectNode body = restTemplate.postForObject(getUrl() + "/arsn/" + type.name(), idArsn, ObjectNode.class);
+        assertEquals("success", body.get("status").asText());
+        ISecAssn arsn = dao.getSa(new SpiScid(100, (short) 46), type);
+        assertEquals(8, (short) arsn.getArsnLen());
+        assertArrayEquals(new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}, arsn.getArsn());
+        assertEquals(10, (short) arsn.getArsnw());
+        assertEquals(type, arsn.getType());
+
+        idArsn.put("arsn", "02");
+        body = restTemplate.postForObject(getUrl() + "/arsn/" + type.name(), idArsn, ObjectNode.class);
+        assertEquals("success", body.get("status").asText());
+        arsn = dao.getSa(new SpiScid(100, (short) 46), type);
+        assertArrayEquals(new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02}, arsn.getArsn());
+
+        idArsn.put("arsn", "000000000000000001");
+        body = restTemplate.postForObject(getUrl() + "/arsn/" + type.name(), idArsn, ObjectNode.class);
+        assertEquals("error", body.get("status").asText());
+        arsn = dao.getSa(new SpiScid(100, (short) 46), type);
+        assertArrayEquals(new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02}, arsn.getArsn());
+    }
+
+    @Test
     public void testResetArsn() throws KmcException {
         testCreateSa();
 
@@ -275,7 +550,7 @@ public class SaControllerTest extends BaseH2Test {
         idArsn.put("arsnLen", 8).put("arsn", "0000000000000001").put("arsnw", 10);
         ObjectNode body = restTemplate.postForObject(getUrl() + "/arsn", idArsn, ObjectNode.class);
         assertEquals("success", body.get("status").asText());
-        SecAssn arsn = dao.getSa(new SpiScid(100, (short) 46));
+        ISecAssn arsn = dao.getSa(new SpiScid(100, (short) 46), FrameType.TC);
         assertEquals(8, (short) arsn.getArsnLen());
         assertArrayEquals(new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}, arsn.getArsn());
         assertEquals(10, (short) arsn.getArsnw());
@@ -290,6 +565,69 @@ public class SaControllerTest extends BaseH2Test {
     }
 
     @Test
+    public void testResetIvByType() throws KmcException {
+        resetIvByType(FrameType.TC);
+        resetIvByType(FrameType.TM);
+        resetIvByType(FrameType.AOS);
+    }
+
+    public void resetIvByType(FrameType type) throws KmcException {
+        createSaByType(type);
+        ObjectNode idIv = mapper.createObjectNode();
+        idIv.withObject("/id").put("spi", 100).put("scid", 46);
+        idIv.put("iv", "00000000000000000000000000000001");
+        idIv.put("ivLen", 16);
+        ObjectNode body = restTemplate.postForObject(getUrl() + "/iv/" + type.name(), idIv, ObjectNode.class);
+        assertEquals("success", body.get("status").asText());
+        ISecAssn iv = dao.getSa(new SpiScid(100, (short) 46), type);
+        assertEquals(type, iv.getType());
+        assertEquals(16, (short) iv.getIvLen());
+        assertArrayEquals(new byte[]{0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x01}, iv.getIv());
+
+        idIv.put("iv", "02");
+        body = restTemplate.postForObject(getUrl() + "/iv/" + type.name(), idIv, ObjectNode.class);
+        assertEquals("success", body.get("status").asText());
+        iv = dao.getSa(new SpiScid(100, (short) 46), type);
+        assertEquals(type, iv.getType());
+        assertArrayEquals(new byte[]{0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x02}, iv.getIv());
+
+        idIv.put("ivLen", 2);
+        idIv.put("iv", "00000001");
+        body = restTemplate.postForObject(getUrl() + "/iv/" + type.name(), idIv, ObjectNode.class);
+        assertEquals("error", body.get("status").asText());
+    }
+
+    @Test
     public void testResetIv() throws KmcException {
         testCreateSa();
         ObjectNode idIv = mapper.createObjectNode();
@@ -298,7 +636,7 @@ public class SaControllerTest extends BaseH2Test {
         idIv.put("ivLen", 16);
         ObjectNode body = restTemplate.postForObject(getUrl() + "/iv", idIv, ObjectNode.class);
         assertEquals("success", body.get("status").asText());
-        SecAssn iv = dao.getSa(new SpiScid(100, (short) 46));
+        ISecAssn iv = dao.getSa(new SpiScid(100, (short) 46), FrameType.TC);
         assertEquals(16, (short) iv.getIvLen());
         assertArrayEquals(new byte[]{0x00,
                 0x00,
@@ -320,7 +658,7 @@ public class SaControllerTest extends BaseH2Test {
         idIv.put("iv", "02");
         body = restTemplate.postForObject(getUrl() + "/iv", idIv, ObjectNode.class);
         assertEquals("success", body.get("status").asText());
-        iv = dao.getSa(new SpiScid(100, (short) 46));
+        iv = dao.getSa(new SpiScid(100, (short) 46), FrameType.TC);
         assertArrayEquals(new byte[]{0x00,
                 0x00,
                 0x00,
@@ -345,6 +683,41 @@ public class SaControllerTest extends BaseH2Test {
     }
 
     @Test
+    public void testRekeyByType() throws KmcException {
+        rekeyByType(FrameType.TC);
+        rekeyByType(FrameType.TM);
+        rekeyByType(FrameType.AOS);
+    }
+
+    public void rekeyByType(FrameType type) throws KmcException {
+        createSaByType(type);
+        ObjectNode rekey = mapper.createObjectNode();
+        rekey.withObject("/id").put("spi", 100).put("scid", 46);
+        rekey.put("ekid", "bogus/ekid");
+        ObjectNode body = restTemplate.postForObject(getUrl() + "/key/" + type.name(), rekey, ObjectNode.class);
+        assertEquals("success", body.get("status").asText());
+        ISecAssn keyed = dao.getSa(new SpiScid(100, (short) 46), type);
+        assertEquals(type, keyed.getType());
+        assertEquals("bogus/ekid", keyed.getEkid());
+        rekey.put("akid", "bogus/akid");
+        rekey.put("ekid", "");
+        body = restTemplate.postForObject(getUrl() + "/key/" + type.name(), rekey, ObjectNode.class);
+        assertEquals("success", body.get("status").asText());
+        keyed = dao.getSa(new SpiScid(100, (short) 46), type);
+        assertEquals(type, keyed.getType());
+        assertEquals("bogus/akid", keyed.getAkid());
+        assertEquals("", keyed.getEkid());
+        rekey.put("akid", "bogus/akid/2");
+        rekey.put("ekid", "bogus/ekid/2");
+        body = restTemplate.postForObject(getUrl() + "/key/" + type.name(), rekey, ObjectNode.class);
+        assertEquals("success", body.get("status").asText());
+        keyed = dao.getSa(new SpiScid(100, (short) 46), type);
+        assertEquals(type, keyed.getType());
+        assertEquals("bogus/akid/2", keyed.getAkid());
+        assertEquals("bogus/ekid/2", keyed.getEkid());
+    }
+
+    @Test
     public void testRekey() throws KmcException {
         testCreateSa();
         ObjectNode rekey = mapper.createObjectNode();
@@ -352,22 +725,43 @@ public class SaControllerTest extends BaseH2Test {
         rekey.put("ekid", "bogus/ekid");
         ObjectNode body = restTemplate.postForObject(getUrl() + "/key", rekey, ObjectNode.class);
         assertEquals("success", body.get("status").asText());
-        SecAssn keyed = dao.getSa(new SpiScid(100, (short) 46));
-        assertEquals(keyed.getEkid(), "bogus/ekid");
+        ISecAssn keyed = dao.getSa(new SpiScid(100, (short) 46), FrameType.TC);
+        assertEquals("bogus/ekid", keyed.getEkid());
         rekey.put("akid", "bogus/akid");
         rekey.put("ekid", "");
         body = restTemplate.postForObject(getUrl() + "/key", rekey, ObjectNode.class);
         assertEquals("success", body.get("status").asText());
-        keyed = dao.getSa(new SpiScid(100, (short) 46));
+        keyed = dao.getSa(new SpiScid(100, (short) 46), FrameType.TC);
         assertEquals("bogus/akid", keyed.getAkid());
         assertEquals("", keyed.getEkid());
         rekey.put("akid", "bogus/akid/2");
         rekey.put("ekid", "bogus/ekid/2");
         body = restTemplate.postForObject(getUrl() + "/key", rekey, ObjectNode.class);
         assertEquals("success", body.get("status").asText());
-        keyed = dao.getSa(new SpiScid(100, (short) 46));
+        keyed = dao.getSa(new SpiScid(100, (short) 46), FrameType.TC);
         assertEquals("bogus/akid/2", keyed.getAkid());
         assertEquals("bogus/ekid/2", keyed.getEkid());
+    }
+
+    @Test
+    public void testGetCsvByType() throws IOException, KmcException {
+        getCsvByType(FrameType.TC);
+        getCsvByType(FrameType.TM);
+        getCsvByType(FrameType.AOS);
+    }
+
+    public void getCsvByType(FrameType type) throws IOException, KmcException {
+        createSaByType(type);
+        String csvResp = restTemplate.getForObject(getUrl() + "/csv/" + type.name(), String.class);
+        assertNotNull(csvResp);
+        List<String> entries = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new StringReader(csvResp))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                entries.add(line);
+            }
+        }
+        assertEquals(7, entries.size());
     }
 
     @Test
@@ -382,7 +776,7 @@ public class SaControllerTest extends BaseH2Test {
                 entries.add(line);
             }
         }
-        assertEquals(7, entries.size());
+        assertEquals(17, entries.size());
     }
 
     @Test
@@ -408,6 +802,29 @@ public class SaControllerTest extends BaseH2Test {
     }
 
     @Test
+    public void testDeleteSaByType() throws KmcException {
+        deleteSaByType(FrameType.TC);
+        deleteSaByType(FrameType.TM);
+        deleteSaByType(FrameType.AOS);
+    }
+
+    public void deleteSaByType(FrameType type) throws KmcException {
+        createSaByType(type);
+        ISecAssn present = dao.getSa(new SpiScid(100, (short) 46), type);
+        assertNotNull(present);
+        assertEquals(type, present.getType());
+
+        ArrayNode  anode = mapper.createArrayNode();
+        ObjectNode node  = anode.addObject();
+        node.put("spi", 100);
+        node.put("scid", 46);
+        HttpEntity<JsonNode> entity = new HttpEntity<>(anode);
+        restTemplate.exchange(getUrl() + "/" + type.name(), HttpMethod.DELETE, entity, JsonNode.class);
+        ISecAssn deleted = dao.getSa(new SpiScid(100, (short) 46), type);
+        assertNull(deleted);
+    }
+
+    @Test
     public void testDeleteSa() throws KmcException {
         testCreateSa();
         ArrayNode  anode = mapper.createArrayNode();
@@ -416,7 +833,7 @@ public class SaControllerTest extends BaseH2Test {
         node.put("scid", 46);
         HttpEntity<JsonNode> entity = new HttpEntity<>(anode);
         restTemplate.exchange(getUrl(), HttpMethod.DELETE, entity, JsonNode.class);
-        SecAssn deleted = dao.getSa(new SpiScid(100, (short) 46));
+        ISecAssn deleted = dao.getSa(new SpiScid(100, (short) 46), FrameType.TC);
         assertNull(deleted);
     }
 

@@ -63,7 +63,6 @@ public class AEOffsetAndIVTest {
     @BeforeClass
     public static void setUp() throws KmcCryptoManagerException {
         cryptoManager = new KmcCryptoManager(null);
-        cryptoManager.setUseCryptoService("false");
 
         cryptoManager.setCipherTransformation(GCM_TRANSFORMATION);
         random = new Random();

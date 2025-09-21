@@ -27,7 +27,6 @@ import gov.nasa.jpl.ammos.kmc.crypto.KmcCryptoException.KmcCryptoErrorCode;
 import gov.nasa.jpl.ammos.kmc.crypto.KmcCryptoManager;
 import gov.nasa.jpl.ammos.kmc.crypto.KmcCryptoManagerException;
 import gov.nasa.jpl.ammos.kmc.crypto.KmcCryptoManagerException.KmcCryptoManagerErrorCode;
-import gov.nasa.jpl.ammos.kmc.crypto.client.CryptoServiceClient;
 import gov.nasa.jpl.ammos.kmc.crypto.library.KmcKeyServiceClient;
 import gov.nasa.jpl.ammos.kmc.crypto.model.CryptoServiceResponse;
 import gov.nasa.jpl.ammos.kmc.crypto.model.DecryptServiceResponse;
@@ -49,7 +48,7 @@ public class DecryptService extends HttpServlet {
 
     private final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 
-    private final int maxBytes = CryptoServiceClient.MAX_CRYPTO_SERVICE_BYTES;
+    private final int maxBytes = KmcCryptoServiceConfiguration.MAX_CRYPTO_SERVICE_BYTES;
     private String kmcHome;
 
     @Override
@@ -139,7 +138,6 @@ public class DecryptService extends HttpServlet {
 
         Decrypter decrypter;
         try {
-            cryptoManager.setUseCryptoService("false");
             decrypter = cryptoManager.createDecrypter();
         } catch (KmcCryptoManagerException e) {
             String msg = "DecryptService: " + e.getMessage();

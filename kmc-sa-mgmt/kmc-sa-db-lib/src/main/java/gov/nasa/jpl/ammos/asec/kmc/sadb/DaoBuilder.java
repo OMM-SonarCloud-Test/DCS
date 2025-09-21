@@ -2,7 +2,6 @@ package gov.nasa.jpl.ammos.asec.kmc.sadb;
 
 import gov.nasa.jpl.ammos.asec.kmc.api.ex.KmcException;
 import gov.nasa.jpl.ammos.asec.kmc.api.sadb.IKmcDao;
-
 import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider;
 import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider;
 import org.slf4j.Logger;
@@ -14,11 +13,13 @@ import java.util.Map;
 
 /**
  * KMC DAO provider
- *
  */
 public class DaoBuilder {
 
-    private static String connFormat = "jdbc:mariadb://%s:%s/%s";
+    private static final String connFormat = "jdbc:mariadb://%s:%s/%s";
+    private static final Logger LOG        = LoggerFactory.getLogger(DaoBuilder.class);
+
+    private final Map<String, String> params = new HashMap<>();
 
     private boolean useMtls;
     private String  connString;
@@ -28,9 +29,6 @@ public class DaoBuilder {
     private String  user;
     private String  pass;
 
-    private Map<String, String> params = new HashMap<>();
-
-    private static final Logger LOG = LoggerFactory.getLogger(DaoBuilder.class);
 
     /**
      * Use TLS. The truststore is configured at the JVM level. Either set it before running the application or override
@@ -58,11 +56,11 @@ public class DaoBuilder {
         //Override the JVM trustStoreType option if it is set wrong for our filetype!
         if (truststore.endsWith("p12")) {
             params.put("trustStoreType", "PKCS12");
-            System.setProperty("javax.net.ssl.trustStoreType","PKCS12");
+            System.setProperty("javax.net.ssl.trustStoreType", "PKCS12");
 
         } else if (truststore.endsWith("jks")) {
             params.put("trustStoreType", "JKS");
-            System.setProperty("javax.net.ssl.trustStoreType","JKS");
+            System.setProperty("javax.net.ssl.trustStoreType", "JKS");
         }
         return this;
     }
@@ -86,9 +84,10 @@ public class DaoBuilder {
             params.put("keyStoreType", "PKCS12");
         } else if (keystore.endsWith("jks")) {
             params.put("keyStoreType", "JKS");
-        }else if (keystore.endsWith("bcfks")) {
+        } else if (keystore.endsWith("bcfks")) {
             //Special case, add BCFIPS to the providers to support out bcfks keystore   
-            //Set Bouncy Castle FIPS to the first java security provider when this class is loaded, as it has dependencies that require it to be tried first
+            //Set Bouncy Castle FIPS to the first java security provider when this class is loaded, as it has
+            // dependencies that require it to be tried first
             LOG.info("DaoBuilder detected we are in FIPS mode, adding BCFIPS to Security provider list");
             Security.insertProviderAt(new BouncyCastleFipsProvider(), 1);
             Security.insertProviderAt(new BouncyCastleJsseProvider("fips:BCFIPS"), 2);

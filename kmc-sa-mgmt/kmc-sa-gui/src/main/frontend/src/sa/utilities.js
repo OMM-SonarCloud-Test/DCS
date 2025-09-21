@@ -114,7 +114,7 @@ export function hexEncLookup(value) {
 }
 
 function hexCipherLookup(obj, value) {
-    if (value === null) {
+    if (value === null || value === undefined) {
         return ''
     } else if (value === '') {
         return value

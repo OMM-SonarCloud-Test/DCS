@@ -35,7 +35,7 @@
             <!--            Uncomment to see log to console-->
             <!--            <AppenderRef ref="Console"/>-->
         </Root>
-        <Logger name="gov" level="INFO" additivity="false">
+        <Logger name="gov" level="ERROR" additivity="false">
             <AppenderRef ref="file"/>
         </Logger>
         <Logger name="org.hibernate" level="ERROR" additivity="false">
@@ -44,6 +44,6 @@
         <Logger name="org.bouncycastle" level="ERROR" additivity="false">
             <AppenderRef ref="file"/>
         </Logger>
-       
+
     </Loggers>
 </Configuration>

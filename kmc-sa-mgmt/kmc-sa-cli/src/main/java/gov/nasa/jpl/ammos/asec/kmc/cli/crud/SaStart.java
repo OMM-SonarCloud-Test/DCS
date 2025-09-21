@@ -8,7 +8,6 @@ import picocli.CommandLine;
 
 /**
  * Start security associations
- *
  */
 @CommandLine.Command(name = "start", description =
         "Start a Security Assocation. Only one (1) SA can be active per " + "(SPI, GVCID) permutation",
@@ -30,7 +29,7 @@ public class SaStart extends BaseCliApp {
         try (IKmcDao dao = getDao()) {
             for (Integer s : spi) {
                 try {
-                    dao.startSa(new SpiScid(s, scid), force);
+                    dao.startSa(new SpiScid(s, scid), force, frameType);
                     console(String.format("%s started SA %d/%d", System.getProperty("user.name"), s, scid));
                 } catch (KmcException e) {
                     warn(String.format("%s, skipping start on SA %d/%d", e.getMessage(), s, scid));
@@ -42,6 +41,11 @@ public class SaStart extends BaseCliApp {
         return exit;
     }
 
+    /**
+     * Main
+     *
+     * @param args args
+     */
     public static void main(String... args) {
         int exit = new CommandLine(new SaStart()).execute(args);
         System.exit(exit);

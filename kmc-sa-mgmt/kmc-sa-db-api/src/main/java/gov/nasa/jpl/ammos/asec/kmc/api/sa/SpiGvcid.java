@@ -11,17 +11,26 @@ import java.io.Serializable;
 
 /**
  * A globally unique identifier comprised of the Security Parameter Index (SPI) and the Global VCID (GVCID)
- *
  */
 @Embeddable
 public class SpiGvcid implements Serializable {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private              Integer      spi;
+
+    /**
+     * SPI
+     */
+    private Integer spi;
+    /**
+     * GVCID
+     */
     @Embedded
     @JsonIgnore
-    private              Gvcid        gvcid;
+    private Gvcid   gvcid;
 
+    /**
+     * Constructor
+     */
     public SpiGvcid() {
         this.gvcid = new Gvcid();
     }
@@ -50,6 +59,7 @@ public class SpiGvcid implements Serializable {
         this.gvcid = gvcid;
     }
 
+    @Override
     public String toString() {
         try {
             return mapper.writeValueAsString(this);

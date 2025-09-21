@@ -1,7 +1,8 @@
 package gov.nasa.jpl.ammos.asec.kmc.cli.format;
 
 import gov.nasa.jpl.ammos.asec.kmc.api.ex.KmcException;
-import gov.nasa.jpl.ammos.asec.kmc.api.sa.SecAssn;
+import gov.nasa.jpl.ammos.asec.kmc.api.sa.FrameType;
+import gov.nasa.jpl.ammos.asec.kmc.api.sa.ISecAssn;
 import gov.nasa.jpl.ammos.asec.kmc.format.SaCsvInput;
 import org.apache.commons.codec.DecoderException;
 import org.junit.Test;
@@ -12,13 +13,10 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.List;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * CSV input tests
- *
  */
 public class SaCsvInputTest {
 
@@ -27,14 +25,14 @@ public class SaCsvInputTest {
     @Test
     public void testParse() throws IOException, KmcException {
         SaCsvInput input = new SaCsvInput();
-        
+
         InputStream inputStream = SaCsvInputTest.class.getClassLoader().getResourceAsStream(BULK_SA_FILE);
         if (inputStream == null) {
             fail("Test resource file '" + BULK_SA_FILE + "' not found");
         }
-        
+
         try (Reader reader = new InputStreamReader(inputStream)) {
-            List<SecAssn> sas = input.parseCsv(reader);
+            List<ISecAssn> sas = input.parseCsv(reader, FrameType.TC);
             assertEquals(81, sas.size());
         }
     }

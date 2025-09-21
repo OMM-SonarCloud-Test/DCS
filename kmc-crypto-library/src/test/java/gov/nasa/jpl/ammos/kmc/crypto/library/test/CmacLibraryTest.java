@@ -51,7 +51,6 @@ public class CmacLibraryTest {
     @BeforeClass
     public static void setUp() throws KmcCryptoManagerException {
         cryptoManager = new KmcCryptoManager(null);
-        cryptoManager.setUseCryptoService("false");
     }
 
     @Test

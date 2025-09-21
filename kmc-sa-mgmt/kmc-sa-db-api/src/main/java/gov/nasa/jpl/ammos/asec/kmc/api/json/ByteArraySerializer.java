@@ -7,6 +7,9 @@ import org.apache.commons.codec.binary.Hex;
 
 import java.io.IOException;
 
+/**
+ * Serializes byte arrays to hex strings for JSON
+ */
 public class ByteArraySerializer extends JsonSerializer<byte[]> {
 
     @Override

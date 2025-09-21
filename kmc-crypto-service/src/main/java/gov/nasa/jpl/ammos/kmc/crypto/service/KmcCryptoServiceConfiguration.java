@@ -17,6 +17,7 @@ import java.util.stream.StreamSupport;
 @PropertySource("classpath:kmc-crypto-service.properties")
 public class KmcCryptoServiceConfiguration implements EnvironmentAware {
 
+    public static final int MAX_CRYPTO_SERVICE_BYTES = 100000000;  // max bytes for service response
     static Environment springEnv;
 
     @Override

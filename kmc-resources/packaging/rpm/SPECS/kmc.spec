@@ -1,19 +1,19 @@
 Name:           kmc
 Version:        %{kmc_version}
 Release:        1%{?dist}
-Summary:        AMMOS Key Management & Cryptography Tools
+Summary:        AMMOS Data Cryptography Services (DCS)
 
 AutoReqProv:    no
 Provides:       ammos(kmc) = %{version}-%{release}
 
 License:        Apache 2.0
-URL:            https://github.com/NASA-AMMOS/KMC
+URL:            https://github.com/NASA-AMMOS/DCS
 
 %description
-AMMOS KMC provides data-level encryption/decryption and integrity check value (ICV) creation/ verification capabilities for securing data at-rest (and in-transit, as an additional layer of protection over secure connections), and implements the CCSDS Space Data Link Security (SDLS) protocol for doing transfer frame encryption.
+AMMOS DCS provides data-level encryption/decryption and integrity check value (ICV) creation/ verification capabilities for securing data at-rest (and in-transit, as an additional layer of protection over secure connections), and implements the CCSDS Space Data Link Security (SDLS) protocol for doing transfer frame encryption.
 
 %package        crypto-service
-Summary:        AMMOS Key Management & Cryptography Crypto Service
+Summary:        AMMOS Data Cryptography Services (DCS)
 Version:        %{version}
 License:        Apache 2.0
 AutoReqProv:    no

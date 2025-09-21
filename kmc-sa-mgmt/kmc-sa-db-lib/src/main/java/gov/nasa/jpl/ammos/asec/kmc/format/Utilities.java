@@ -2,6 +2,9 @@ package gov.nasa.jpl.ammos.asec.kmc.format;
 
 import org.apache.commons.codec.binary.Hex;
 
+/**
+ * Utilities
+ */
 public class Utilities {
     private Utilities() {
     }

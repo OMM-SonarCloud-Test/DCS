@@ -6,16 +6,34 @@ import jakarta.persistence.Embeddable;
 
 import java.io.Serializable;
 
+/**
+ * SPI SCID identifier
+ */
 @Embeddable
 public class SpiScid implements Serializable {
     private static final ObjectMapper mapper = new ObjectMapper();
+    /**
+     * SPI
+     */
     private              Integer      spi;
+    /**
+     * SCID
+     */
     private              Short        scid;
 
+    /**
+     * Constructor
+     */
     public SpiScid() {
 
     }
 
+    /**
+     * Constructor
+     *
+     * @param spi  SPI
+     * @param scid SCID
+     */
     public SpiScid(Integer spi, Short scid) {
         this.spi = spi;
         this.scid = scid;
@@ -30,18 +48,38 @@ public class SpiScid implements Serializable {
         }
     }
 
+    /**
+     * Get SPI
+     *
+     * @return SPI
+     */
     public Integer getSpi() {
         return spi;
     }
 
+    /**
+     * Set SPI
+     *
+     * @param spi SPI
+     */
     public void setSpi(Integer spi) {
         this.spi = spi;
     }
 
+    /**
+     * Get SCID
+     *
+     * @return SCID
+     */
     public Short getScid() {
         return scid;
     }
 
+    /**
+     * Set SCID
+     *
+     * @param scid SCID
+     */
     public void setScid(Short scid) {
         this.scid = scid;
     }

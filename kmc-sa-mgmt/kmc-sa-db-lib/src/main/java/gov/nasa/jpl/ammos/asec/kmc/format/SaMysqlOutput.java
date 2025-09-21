@@ -1,6 +1,6 @@
 package gov.nasa.jpl.ammos.asec.kmc.format;
 
-import gov.nasa.jpl.ammos.asec.kmc.api.sa.SecAssn;
+import gov.nasa.jpl.ammos.asec.kmc.api.sa.ISecAssn;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -12,15 +12,17 @@ import java.util.List;
 
 /**
  * Security Association output format that imitates the MySQL key-value format
- *
  */
 public class SaMysqlOutput implements IOutput {
+    /**
+     * Constructor
+     */
     public SaMysqlOutput() {
 
     }
 
     @Override
-    public void print(PrintWriter writer, List<SecAssn> saList) {
+    public void print(PrintWriter writer, List<ISecAssn> saList) {
         VelocityEngine engine = new VelocityEngine();
         engine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
         engine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());

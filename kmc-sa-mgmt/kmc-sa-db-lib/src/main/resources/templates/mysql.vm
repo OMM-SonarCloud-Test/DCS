@@ -28,5 +28,6 @@ stmacf_len: $!sa.getStmacfLen()
   arsn_len: $!sa.getArsnLen()
       arsn: $Utilities.getHex($!sa.getArsn())
      arsnw: $!sa.getArsnw()
+      type: $!sa.getType().name() -- note: field not present in DB, maps to a specific frame table
     #set($count=$count+1)
 #end

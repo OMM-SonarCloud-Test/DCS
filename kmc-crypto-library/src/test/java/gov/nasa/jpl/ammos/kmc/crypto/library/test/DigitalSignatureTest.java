@@ -55,7 +55,6 @@ public class DigitalSignatureTest {
     @BeforeClass
     public static void setUp() throws KmcCryptoManagerException {
         cryptoManager = new KmcCryptoManager(null);
-        cryptoManager.setUseCryptoService("false");
     }
 
     @Test
@@ -112,7 +111,6 @@ public class DigitalSignatureTest {
         String[] args = new String[] {
             "-default_digital_signature_algorithm=" + defaultAlgorithm};
         KmcCryptoManager myManager = new KmcCryptoManager(args);
-        myManager.setUseCryptoService("false");
 
         // create IcvCreator with default algorithm
         IcvCreator creator = myManager.createIcvCreator(KEYREFS[0]);

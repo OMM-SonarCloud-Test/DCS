@@ -1,6 +1,6 @@
 package gov.nasa.jpl.ammos.asec.kmc.format;
 
-import gov.nasa.jpl.ammos.asec.kmc.api.sa.SecAssn;
+import gov.nasa.jpl.ammos.asec.kmc.api.sa.ISecAssn;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -12,11 +12,16 @@ import java.util.List;
 
 /**
  * CSV Output Formatter
- *
  */
 public class SaCsvOutput implements IOutput {
 
+    /**
+     * Extended output template
+     */
     public static final String  TEMPLATES_EXTENDED_VM  = "templates/extended.vm";
+    /**
+     * Condensed output template
+     */
     public static final String  TEMPLATES_CONDENSED_VM = "templates/condensed.vm";
     private final       boolean extended;
 
@@ -30,7 +35,7 @@ public class SaCsvOutput implements IOutput {
     }
 
     @Override
-    public void print(PrintWriter writer, List<SecAssn> sas) {
+    public void print(PrintWriter writer, List<ISecAssn> sas) {
         VelocityEngine engine = new VelocityEngine();
         engine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
         engine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());

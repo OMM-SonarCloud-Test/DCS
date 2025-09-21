@@ -13,7 +13,6 @@ import java.util.Set;
 
 /**
  * Validator for Security Association parameters and objects
- *
  */
 public class SecAssnValidator {
 
@@ -24,7 +23,13 @@ public class SecAssnValidator {
 
     }
 
+    /**
+     * Service type range
+     */
     public static final Set<Short> ST_RANGE    = new HashSet<>(Arrays.asList((short) 0, (short) 1));
+    /**
+     * State range
+     */
     public static final Set<Short> STATE_RANGE = new HashSet<>(Arrays.asList((short) 0, (short) 1, (short) 2,
             (short) 3));
 
@@ -34,7 +39,7 @@ public class SecAssnValidator {
      * @param sa security association
      * @throws KmcException ex
      */
-    public static void validate(SecAssn sa) throws KmcException {
+    public static void validate(ISecAssn sa) throws KmcException {
         // validate required
         if (sa.getScid() == null || sa.getTfvn() == null || sa.getMapid() == null || sa.getVcid() == null) {
             throw new KmcException("invalid GVCID: SCID, VCID, TFVN, and MAPID are all required");
@@ -55,13 +60,13 @@ public class SecAssnValidator {
         }
     }
 
-    private static void verifyEst(SecAssn sa) throws KmcException {
+    private static void verifyEst(ISecAssn sa) throws KmcException {
         if (!ST_RANGE.contains(sa.getEst())) {
             throw new KmcException(String.format("invalid EST: %d", sa.getEst()));
         }
     }
 
-    private static void verifyAst(SecAssn sa) throws KmcException {
+    private static void verifyAst(ISecAssn sa) throws KmcException {
         if (!ST_RANGE.contains(sa.getAst())) {
             throw new KmcException(String.format("invalid AST: %d", sa.getAst()));
         }
@@ -116,33 +121,48 @@ public class SecAssnValidator {
     }
 
     /**
-     * Verify IV 
+     * Verify IV
      *
-     * @param iv    initialization vectore
-     * @param ivLen iv length
+     * @param iv       initialization vectore
+     * @param ivLen    iv length
+     * @param est      EST
+     * @param ecsBytes ECS bytes
      * @return iv byte array
      * @throws KmcException ex
      */
-    public static byte[] verifyIv(String  iv, Short ivLen, Short est,String ecsBytes ) throws KmcException {
-        return verifyIv(convertHexToBytes(iv, "iv must be a hex string", true), ivLen, est, convertHexToBytes(ecsBytes, "ECS must be a hex string", true));
+    public static byte[] verifyIv(String iv, Short ivLen, Short est, String ecsBytes) throws KmcException {
+        return verifyIv(convertHexToBytes(iv, "iv must be a hex string", true), ivLen, est,
+                convertHexToBytes(ecsBytes, "ECS must be a hex string", true));
     }
-    public static byte[] verifyIv(byte []  iv, Short ivLen, Short est,byte [] ecsBytes ) throws KmcException {
+
+    /**
+     * Verify IV
+     *
+     * @param iv       IV
+     * @param ivLen    IV length
+     * @param est      encryption service type
+     * @param ecsBytes ECS bytes
+     * @return valid or invalid
+     * @throws KmcException exception
+     */
+    public static byte[] verifyIv(byte[] iv, Short ivLen, Short est, byte[] ecsBytes) throws KmcException {
         ECSTYPE validEcs = ECSTYPE.fromBytes(ecsBytes);
-        if ( est != null && est == (short)0){
+        if (est != null && est == (short) 0) {
             //Encryption is not on, skip validation
             return iv;
         }
-        if (validEcs == null){
+        if (validEcs == null) {
             //Bypass validation, ECS holds no information in this case
             return iv;
             //throwEx("Unknown ECS, check value or request an update of the KMC API Library ECSTYPE list");
         }
-        if (ivLen.shortValue() != validEcs.getIvLen()  ) {
-            throwEx("ivLen of " + ivLen.shortValue() + " is invalid for the current ECS; " + validEcs.name() + " accepts only ivLen " + validEcs.getIvLen());
+        if (ivLen.shortValue() != validEcs.getIvLen()) {
+            throwEx("ivLen of " + ivLen.shortValue() + " is invalid for the current ECS; " + validEcs.name() + " " +
+                    "accepts only ivLen " + validEcs.getIvLen());
         }
-        if (iv != null && iv.length != validEcs.getIvLen() ) {
-            throwEx("IV " +Hex.encodeHexString(iv) + " is length: "+ iv.length+" but selected ECS " + validEcs.name() + " accepts only IVs of length " + validEcs.getIvLen());
-        }   
+        if (iv != null && iv.length != validEcs.getIvLen()) {
+            throwEx("IV " + Hex.encodeHexString(iv) + " is length: " + iv.length + " but selected ECS " + validEcs.name() + " accepts only IVs of length " + validEcs.getIvLen());
+        }
         return iv;
     }
 
@@ -263,7 +283,7 @@ public class SecAssnValidator {
      * @param sa security association
      * @throws KmcException ex
      */
-    public static void verifyAbm(SecAssn sa) throws KmcException {
+    public static void verifyAbm(ISecAssn sa) throws KmcException {
         if (sa.getAbm() != null && sa.getAbmLen() != null && sa.getAbm().length != sa.getAbmLen()) {
             throwEx("ABM and ABM length must agree");
         }
@@ -275,8 +295,8 @@ public class SecAssnValidator {
      * @param sa security association
      * @throws KmcException ex
      */
-    public static void verifyIv(SecAssn sa) throws KmcException {
-       verifyIv(sa.getIv(),sa.getIvLen(), sa.getEst(),sa.getEcs()); 
+    public static void verifyIv(ISecAssn sa) throws KmcException {
+        verifyIv(sa.getIv(), sa.getIvLen(), sa.getEst(), sa.getEcs());
 
     }
 
@@ -288,7 +308,7 @@ public class SecAssnValidator {
      * @param sa security association
      * @throws KmcException ex
      */
-    public static void verifyArsn(SecAssn sa) throws KmcException {
+    public static void verifyArsn(ISecAssn sa) throws KmcException {
 //        if (sa.getArsn().length != sa.getArsnLen()) {
 //            throw new KmcException("ARSN and ARSN length must agree");
 //        }
@@ -321,10 +341,20 @@ public class SecAssnValidator {
      * @throws KmcException ex
      */
     public static byte[] convertHexToBytes(String hexString, String msg) throws KmcException {
-    return convertHexToBytes(hexString, msg, false);
+        return convertHexToBytes(hexString, msg, false);
     }
+
+    /**
+     * Convert hex string to bytes
+     *
+     * @param hexString hex string
+     * @param msg       message
+     * @param allowNull allow null values
+     * @return byte array
+     * @throws KmcException exception
+     */
     public static byte[] convertHexToBytes(String hexString, String msg, boolean allowNull) throws KmcException {
-        if (allowNull && hexString == null){
+        if (allowNull && hexString == null) {
             return null;
         }
         try {

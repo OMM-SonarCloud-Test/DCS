@@ -1,16 +1,22 @@
 package gov.nasa.jpl.ammos.asec.kmc.api.sadb;
 
 import gov.nasa.jpl.ammos.asec.kmc.api.ex.KmcException;
-import gov.nasa.jpl.ammos.asec.kmc.api.sa.SecAssn;
+import gov.nasa.jpl.ammos.asec.kmc.api.sa.FrameType;
+import gov.nasa.jpl.ammos.asec.kmc.api.sa.ISecAssn;
 import gov.nasa.jpl.ammos.asec.kmc.api.sa.SpiScid;
 
 import java.util.List;
 
 /**
  * KMC DAO
- *
  */
 public interface IKmcDao extends AutoCloseable {
+
+    /**
+     * Get a New DB session
+     *
+     * @return DB session
+     */
     IDbSession newSession();
 
     /**
@@ -22,9 +28,10 @@ public interface IKmcDao extends AutoCloseable {
      * @param scid       spacecraft id
      * @param vcid       virtual channel id
      * @param mapid      multiplexer access point id
+     * @param type       frame type
      * @throws KmcException exception
      */
-    void createSa(IDbSession IdbSession, Integer spi, Byte tvfn, Short scid, Byte vcid, Byte mapid) throws KmcException;
+    void createSa(IDbSession IdbSession, Integer spi, Byte tvfn, Short scid, Byte vcid, Byte mapid, FrameType type) throws KmcException;
 
     /**
      * Create an SA. Initial state is UNKEYED.
@@ -34,10 +41,11 @@ public interface IKmcDao extends AutoCloseable {
      * @param scid  spacecraft id
      * @param vcid  virtual channel id
      * @param mapid multiplexer access point id
+     * @param type  frame type
      * @return sa
      * @throws KmcException exception
      */
-    SecAssn createSa(Integer spi, Byte tvfn, Short scid, Byte vcid, Byte mapid) throws KmcException;
+    ISecAssn createSa(Integer spi, Byte tvfn, Short scid, Byte vcid, Byte mapid, FrameType type) throws KmcException;
 
     /**
      * Create an SA
@@ -46,7 +54,7 @@ public interface IKmcDao extends AutoCloseable {
      * @return sa
      * @throws KmcException exception
      */
-    SecAssn createSa(SecAssn sa) throws KmcException;
+    ISecAssn createSa(ISecAssn sa) throws KmcException;
 
     /**
      * Create an SA with the provided DB session
@@ -55,7 +63,7 @@ public interface IKmcDao extends AutoCloseable {
      * @param sa         security association
      * @throws KmcException exception
      */
-    void createSa(IDbSession IdbSession, SecAssn sa) throws KmcException;
+    void createSa(IDbSession IdbSession, ISecAssn sa) throws KmcException;
 
     /**
      * Re/key an SA for encryption with the provided database session
@@ -65,9 +73,10 @@ public interface IKmcDao extends AutoCloseable {
      * @param ekid    encryption key id
      * @param ecs     encryption cipher suite
      * @param ecsLen  ecs length
+     * @param type    frame type
      * @throws KmcException exception
      */
-    void rekeySaEnc(IDbSession session, SpiScid id, String ekid, byte[] ecs, Short ecsLen) throws KmcException;
+    void rekeySaEnc(IDbSession session, SpiScid id, String ekid, byte[] ecs, Short ecsLen, FrameType type) throws KmcException;
 
     /**
      * Re/key an SA for encryption
@@ -76,10 +85,11 @@ public interface IKmcDao extends AutoCloseable {
      * @param ekid   encryption key id
      * @param ecs    encryption cipher suite
      * @param ecsLen ecs length
+     * @param type   frame type
      * @return sa
      * @throws KmcException exception
      */
-    SecAssn rekeySaEnc(SpiScid id, String ekid, byte[] ecs, Short ecsLen) throws KmcException;
+    ISecAssn rekeySaEnc(SpiScid id, String ekid, byte[] ecs, Short ecsLen, FrameType type) throws KmcException;
 
     /**
      * Rekey an SA for authentication with the provided database session
@@ -89,9 +99,10 @@ public interface IKmcDao extends AutoCloseable {
      * @param akid    authentication key id
      * @param acs     authentication cipher suite
      * @param acsLen  acs length
+     * @param type    frame type
      * @throws KmcException exception
      */
-    void rekeySaAuth(IDbSession session, SpiScid id, String akid, byte[] acs, Short acsLen) throws KmcException;
+    void rekeySaAuth(IDbSession session, SpiScid id, String akid, byte[] acs, Short acsLen, FrameType type) throws KmcException;
 
     /**
      * Rekey an SA for authentication
@@ -100,28 +111,31 @@ public interface IKmcDao extends AutoCloseable {
      * @param akid   authentication key id
      * @param acs    authentication cipher suite
      * @param acsLen acs length
+     * @param type   frame type
      * @return sa
      * @throws KmcException exception
      */
-    SecAssn rekeySaAuth(SpiScid id, String akid, byte[] acs, Short acsLen) throws KmcException;
+    ISecAssn rekeySaAuth(SpiScid id, String akid, byte[] acs, Short acsLen, FrameType type) throws KmcException;
 
     /**
      * Expire an SA with the provided database session
      *
      * @param session database session
      * @param id      spi + scid
+     * @param type    frame type
      * @throws KmcException exception
      */
-    void expireSa(IDbSession session, SpiScid id) throws KmcException;
+    void expireSa(IDbSession session, SpiScid id, FrameType type) throws KmcException;
 
     /**
      * Expire an SA
      *
-     * @param id spi + scid
+     * @param id   spi + scid
+     * @param type frame type
      * @return sa
      * @throws KmcException exception
      */
-    SecAssn expireSa(SpiScid id) throws KmcException;
+    ISecAssn expireSa(SpiScid id, FrameType type) throws KmcException;
 
     /**
      * Start an SA with the provided database session. Sets given SPI SA to ENABLED, all other SAs to KEYED.
@@ -129,90 +143,100 @@ public interface IKmcDao extends AutoCloseable {
      * @param session database session
      * @param id      spi + scid
      * @param force   start SA, stopping other SAs with same GVCID
+     * @param type    frame type
      * @throws KmcException exception
      */
-    void startSa(IDbSession session, SpiScid id, boolean force) throws KmcException;
+    void startSa(IDbSession session, SpiScid id, boolean force, FrameType type) throws KmcException;
 
     /**
      * Start an SA. Sets given SPI SA to ENABLED, all other SAs to KEYED.
      *
      * @param id    spi + scid
      * @param force start SA, stopping other SAs with same GVCID
+     * @param type  frame type
      * @return sa
      * @throws KmcException exception
      */
-    SecAssn startSa(SpiScid id, boolean force) throws KmcException;
+    ISecAssn startSa(SpiScid id, boolean force, FrameType type) throws KmcException;
 
     /**
      * Stop an SA with the provided database session. Sets given SPI SA to KEYED.
      *
      * @param session database session
      * @param id      spi + scid
+     * @param type    frame type
      * @throws KmcException exception
      */
-    void stopSa(IDbSession session, SpiScid id) throws KmcException;
+    void stopSa(IDbSession session, SpiScid id, FrameType type) throws KmcException;
 
     /**
      * Stop an SA. Sets given SPI SA to KEYED.
      *
-     * @param id spi + scid
+     * @param id   spi + scid
+     * @param type frame type
      * @return sa
      * @throws KmcException exception
      */
-    SecAssn stopSa(SpiScid id) throws KmcException;
+    ISecAssn stopSa(SpiScid id, FrameType type) throws KmcException;
 
     /**
      * Delete an SA with the provided database session. Removes the SA from the DB.
      *
      * @param session database session
      * @param id      spi + scid
+     * @param type    frame type
      * @throws KmcException exception
      */
-    void deleteSa(IDbSession session, SpiScid id) throws KmcException;
+    void deleteSa(IDbSession session, SpiScid id, FrameType type) throws KmcException;
 
     /**
      * Delete an SA. Removes the SA from the DB.
      *
-     * @param id spi + scid
+     * @param id   spi + scid
+     * @param type frame type
      * @throws KmcException exception
      */
-    void deleteSa(SpiScid id) throws KmcException;
+    void deleteSa(SpiScid id, FrameType type) throws KmcException;
 
     /**
      * Get an SA with the provided database session
      *
      * @param session database session
      * @param id      spi + scid
+     * @param type    frame type
      * @return security association
      * @throws KmcException exception
      */
-    SecAssn getSa(IDbSession session, SpiScid id) throws KmcException;
+    ISecAssn getSa(IDbSession session, SpiScid id, FrameType type) throws KmcException;
 
     /**
      * Get an SA
      *
-     * @param id spi + scid
+     * @param id   spi + scid
+     * @param type frame type
      * @return security association
      * @throws KmcException exception
      */
-    SecAssn getSa(SpiScid id) throws KmcException;
+    ISecAssn getSa(SpiScid id, FrameType type) throws KmcException;
 
     /**
      * Get all SAs with the provided database session
      *
      * @param session database session
+     * @param type    frame type
      * @return a list of SAs
      * @throws KmcException exception
      */
-    List<SecAssn> getSas(IDbSession session) throws KmcException;
+    List<ISecAssn> getSas(IDbSession session, FrameType type) throws KmcException;
 
     /**
      * Get all SAs
      *
+     * @param type frame type
      * @return a list of SAs
      * @throws KmcException exception
      */
-    List<SecAssn> getSas() throws KmcException;
+    List<ISecAssn> getSas(FrameType type) throws KmcException;
 
     /**
      * Update an SA with the provided database session
@@ -221,7 +245,7 @@ public interface IKmcDao extends AutoCloseable {
      * @param sa      security association
      * @throws KmcException exception
      */
-    void updateSa(IDbSession session, SecAssn sa) throws KmcException;
+    void updateSa(IDbSession session, ISecAssn sa) throws KmcException;
 
     /**
      * Update an SA
@@ -230,7 +254,7 @@ public interface IKmcDao extends AutoCloseable {
      * @return sa
      * @throws KmcException exception
      */
-    SecAssn updateSa(SecAssn sa) throws KmcException;
+    ISecAssn updateSa(ISecAssn sa) throws KmcException;
 
     /**
      * Close the DAO

@@ -18,9 +18,9 @@
  */
 import axios from "axios";
 
-export const listSa = async (respCallback, errCallback) => {
+export const listSa = async (type, respCallback, errCallback) => {
     try {
-        const result = await axios("api/sa")
+        const result = await axios("api/sa/" + type)
         respCallback(result)
     } catch (err) {
         errCallback(err)
@@ -29,12 +29,14 @@ export const listSa = async (respCallback, errCallback) => {
 
 /**
  * Create an SA
+ * @param type frame type (TC/TM/AOS)
  * @param values SA in JSON
  * @param respCallback response callback
  * @param errCallback error callback
  */
-export const createSa = (values, respCallback, errCallback) => {
+export const createSa = (type, values, respCallback, errCallback) => {
     console.log('creating spi/scid: ' + values.spi + '/' + values.scid)
+    values.type = type
     axios({
         method: 'put',
         url: "api/sa",
@@ -48,15 +50,16 @@ export const createSa = (values, respCallback, errCallback) => {
 
 /**
  * Start an SA
+ * @param type frame type (TC/TM/AOS)
  * @param id SA ID (SPI/SCID)
  * @param respCallback response callback
  * @param errCallback error callback
  */
-export const startSa = (id, respCallback, errCallback) => {
+export const startSa = (type, id, respCallback, errCallback) => {
     console.log(`starting ${id.spi}/${id.scid}`)
     axios({
         method: 'post',
-        url: 'api/sa/start',
+        url: 'api/sa/start/' + type,
         data: id
     }).then(resp => {
         respCallback(resp)
@@ -67,15 +70,16 @@ export const startSa = (id, respCallback, errCallback) => {
 
 /**
  * Stop an SA
+ * @param type frame type (TC/TM/AOS)
  * @param id SA ID (SPI/SCID)
  * @param respCallback response callback
  * @param errCallback error callback
  */
-export const stopSa = (id, respCallback, errCallback) => {
-    console.log(`starting ${id.spi}/${id.scid}`)
+export const stopSa = (type, id, respCallback, errCallback) => {
+    console.log(`starting ${type} ${id.spi}/${id.scid}`)
     axios({
         method: 'post',
-        url: 'api/sa/stop',
+        url: `api/sa/stop/${type}`,
         data: id
     }).then(resp => {
         respCallback(resp)
@@ -86,15 +90,16 @@ export const stopSa = (id, respCallback, errCallback) => {
 
 /**
  * Update an SA
+ * @param type frame type (TC/TM/AOS)
  * @param values SA in JSON
  * @param respCallback response callback
  * @param errCallback error callback
  */
-export const updateSa = (values, respCallback, errCallback) => {
-    console.log('updating spi/scid: ' + values.spi + '/' + values.scid)
+export const updateSa = (type, values, respCallback, errCallback) => {
+    console.log(`updating ${type} spi/scid: ${values.spi}/${values.scid}`)
     axios({
         method: 'post',
-        url: "api/sa",
+        url: "api/sa/" + type,
         data: values
     }).then(resp => {
         respCallback(resp)
@@ -105,15 +110,16 @@ export const updateSa = (values, respCallback, errCallback) => {
 
 /**
  * Delete an SA
+ * @param type frame type (TC/TM/AOS)
  * @param id SA ID (SPI/SCID)
  * @param respCallback response callback
  * @param errCallback error callback
  */
-export const deleteSa = (id, respCallback, errCallback) => {
-    console.log('deleting spi/scid: ' + id.spi + '/' + id.scid)
+export const deleteSa = (type, id, respCallback, errCallback) => {
+    console.log(`deleting ${type} spi/scid: ${id.spi}/${id.scid}`)
     axios({
         method: 'delete',
-        url: "api/sa",
+        url: `api/sa/${type}`,
         data: [id]
     }).then(resp => {
         respCallback(resp)
@@ -124,15 +130,16 @@ export const deleteSa = (id, respCallback, errCallback) => {
 
 /**
  * Delete multiple SAs
+ * @param type frame type (TC/TM/AOS)
  * @param ids array of SA IDs (SPI/SCID)
  * @param respCallback
  * @param errCallback
  */
-export const deleteSas = (ids, respCallback, errCallback) => {
-    console.log('deleting multiple SAs')
+export const deleteSas = (type, ids, respCallback, errCallback) => {
+    console.log(`deleting multiple ${type} SAs`)
     axios({
         method: 'delete',
-        url: "api/sa",
+        url: `api/sa/${type}`,
         data: ids
     }).then(resp => {
         respCallback(resp)
@@ -147,11 +154,11 @@ export const deleteSas = (ids, respCallback, errCallback) => {
  * @param respCallback response callback
  * @param errCallback error callback
  */
-export const expireSa = (id, respCallback, errCallback) => {
-    console.log('expiring spi/scid: ' + id.spi + '/' + id.scid)
+export const expireSa = (type, id, respCallback, errCallback) => {
+    console.log(`expiring ${type} spi/scid: ${id.spi}/${id.scid}`)
     axios({
         method: 'post',
-        url: "api/sa/expire",
+        url: `api/sa/expire/${type}`,
         data: id
     }).then(resp => {
         respCallback(resp)
@@ -162,16 +169,17 @@ export const expireSa = (id, respCallback, errCallback) => {
 
 /**
  * Reset ARSN
+ * @param type frame type (TC/TM/AOS)
  * @param id
  * @param arsn
  * @param respCallback
  * @param errCallback
  */
-export const resetArsn = (id, arsn, respCallback, errCallback) => {
-    console.log(`resetting arsn to ${arsn} on spi/scid: ${id.spi} / ${id.scid}`)
+export const resetArsn = (type, id, arsn, respCallback, errCallback) => {
+    console.log(`resetting arsn to ${arsn} on ${type} spi/scid: ${id.spi} / ${id.scid}`)
     axios({
         method: 'post',
-        url: "api/sa/arsn",
+        url: `api/sa/arsn/${type}`,
         data: {
             id: id,
             arsn: arsn
@@ -185,19 +193,20 @@ export const resetArsn = (id, arsn, respCallback, errCallback) => {
 
 /**
  * Create SAs via CSV upload
+ * @param type CSV of frame types (eg, "TC,TM,AOS")
  * @param data form data
  * @param setProgress progress function
  * @param respCallback response callback
  * @param errCallback error callback
  */
-export const bulkCreate = (data, setProgress, respCallback, errCallback) => {
+export const bulkCreate = (type, data, setProgress, respCallback, errCallback) => {
     console.log(`creating multiple SAs via CSV upload`)
     axios({
         method: 'post',
         headers: {
             'Content-Type': 'multipart/form-data'
         },
-        url: 'api/sa/create',
+        url: `api/sa/create/${type}`,
         data: data,
         onUploadProgress: (progressEvent) => {
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
@@ -275,14 +284,15 @@ export const createErrorCallback = (enqueueSnackbar) => {
 
 /**
  * Modify ARSN
+ * @param type frame type (TC/TM/AOS)
  * @param data spi/scid id, arsn, arsnLen, arswn
  * @param respCallback response callback
  * @param errCallback error callback
  */
-export const modifyArsn = (data, respCallback, errCallback) => {
+export const modifyArsn = (type, data, respCallback, errCallback) => {
     axios({
         method: 'post',
-        url: 'api/sa/arsn',
+        url: `api/sa/arsn/${type}`,
         data: data
     }).then((r) => {
         respCallback(r)
@@ -293,14 +303,15 @@ export const modifyArsn = (data, respCallback, errCallback) => {
 
 /**
  * Modify IV
+ * @param type frame type (TC/TM/AOS)
  * @param data spi/scid, iv, ivLen
  * @param respCallback response callback
  * @param errCallback error callback
  */
-export const modifyIv = (data, respCallback, errCallback) => {
+export const modifyIv = (type, data, respCallback, errCallback) => {
     axios({
         method: 'post',
-        url: 'api/sa/iv',
+        url: `api/sa/iv/${type}`,
         data: data
     }).then((r) => {
         respCallback(r)
@@ -311,14 +322,15 @@ export const modifyIv = (data, respCallback, errCallback) => {
 
 /**
  * Rekey SA
+ * @param type frame type (TC/TM/AOS)
  * @param data spi/scid id, ekid, akid
  * @param respCallback response callback
  * @param errCallback error callback
  */
-export const rekeySa = (data, respCallback, errCallback) => {
+export const rekeySa = (type, data, respCallback, errCallback) => {
     axios({
         method: 'post',
-        url: 'api/sa/key',
+        url: `api/sa/key/${type}`,
         data: data
     }).then(r => {
         respCallback(r)

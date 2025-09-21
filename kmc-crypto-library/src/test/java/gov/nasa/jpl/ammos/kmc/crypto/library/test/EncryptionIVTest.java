@@ -51,7 +51,6 @@ public class EncryptionIVTest {
     @BeforeClass
     public static void setUp() throws KmcCryptoManagerException {
         cryptoManager = new KmcCryptoManager(null);
-        cryptoManager.setUseCryptoService("false");
         random = new Random();
 
         AES_ENCRYPT_SIZE = (TEST_STRING.length() / AES_BLOCK_SIZE + 1) * AES_BLOCK_SIZE;
@@ -118,7 +117,6 @@ public class EncryptionIVTest {
         ByteArrayOutputStream eos = new ByteArrayOutputStream(AES_ENCRYPT_SIZE);
 
         KmcCryptoManager myCryptoManager = new KmcCryptoManager(args);
-        myCryptoManager.setUseCryptoService("false");
         myCryptoManager.setCipherTransformation(GCM_TRANSFORMATION);
 
         Encrypter encrypter = myCryptoManager.createEncrypter(KEYREF_AES256);

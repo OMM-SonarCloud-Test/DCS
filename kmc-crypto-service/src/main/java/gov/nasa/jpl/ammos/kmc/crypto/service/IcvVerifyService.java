@@ -25,7 +25,6 @@ import gov.nasa.jpl.ammos.kmc.crypto.KmcCryptoException.KmcCryptoErrorCode;
 import gov.nasa.jpl.ammos.kmc.crypto.KmcCryptoManager;
 import gov.nasa.jpl.ammos.kmc.crypto.KmcCryptoManagerException;
 import gov.nasa.jpl.ammos.kmc.crypto.KmcCryptoManagerException.KmcCryptoManagerErrorCode;
-import gov.nasa.jpl.ammos.kmc.crypto.client.CryptoServiceClient;
 import gov.nasa.jpl.ammos.kmc.crypto.library.KmcKeyServiceClient;
 import gov.nasa.jpl.ammos.kmc.crypto.model.CryptoServiceResponse;
 import gov.nasa.jpl.ammos.kmc.crypto.model.IcvVerifyServiceResponse;
@@ -47,7 +46,7 @@ public class IcvVerifyService extends HttpServlet {
 
     private final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 
-    private final int maxBytes = CryptoServiceClient.MAX_CRYPTO_SERVICE_BYTES;
+    private final int maxBytes = KmcCryptoServiceConfiguration.MAX_CRYPTO_SERVICE_BYTES;
     private String kmcHome;
 
     @Override
@@ -117,7 +116,6 @@ public class IcvVerifyService extends HttpServlet {
 
         IcvVerifier icvVerifier;
         try {
-            cryptoManager.setUseCryptoService("false");
             icvVerifier = cryptoManager.createIcvVerifier();
         } catch (KmcCryptoManagerException e) {
             String msg = "IcvVerifyService: " + e.getMessage();

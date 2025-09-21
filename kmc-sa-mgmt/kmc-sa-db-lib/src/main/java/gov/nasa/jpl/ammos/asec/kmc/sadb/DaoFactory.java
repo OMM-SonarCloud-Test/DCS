@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * KMC DAO provider
- *
  */
 public class DaoFactory {
 
@@ -23,14 +22,14 @@ public class DaoFactory {
      * @throws KmcException kmc ex
      */
     public static IKmcDao getDao(Config cfg) throws KmcException {
-        try {            
+        try {
             DaoBuilder builder = new DaoBuilder();
             if (cfg.getUseTls()) {
                 if (cfg.getTruststore().equals(Config.NONE) || cfg.getTruststorePass().equals(Config.NONE)) {
                     throw new KmcException("When TLS is enabled, the " + "truststore and truststore password must be "
                             + "configured");
                 }
-                builder.useTls(cfg.getTruststore(), cfg.getTruststorePass(), cfg.getOverrideJvmTrustore());
+                builder.useTls(cfg.getTruststore(), cfg.getTruststorePass(), cfg.getOverrideJvmTruststore());
             }
 
             if (cfg.getUseMtls()) {
@@ -41,7 +40,6 @@ public class DaoFactory {
                 builder.useMtls(cfg.getKeystore(), cfg.getKeystorePass());
             }
 
-            String url;
             if (!cfg.getConn().equals(Config.NONE)) {
                 builder.setConnString(cfg.getConn());
             }

@@ -7,22 +7,22 @@ import org.mockito.ArgumentCaptor;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 public class ByteArraySerializerTest {
 
     @Test
     public void testSerialize() throws IOException {
-        JsonGenerator gen    = mock(JsonGenerator.class);
-        JsonGenerator genSpy = spy(gen);
+        JsonGenerator gen = mock(JsonGenerator.class);
 
         String want = "01020304";
         want.intern();
         ByteArraySerializer serializer = new ByteArraySerializer();
-        serializer.serialize(new byte[]{0x01, 0x02, 0x03, 0x04}, genSpy, null);
+        serializer.serialize(new byte[]{0x01, 0x02, 0x03, 0x04}, gen, null);
         ArgumentCaptor<String> arg = ArgumentCaptor.forClass(String.class);
-        verify(genSpy).writeObject(want);
-        verify(genSpy).writeObject(arg.capture());
+        verify(gen).writeObject(want);
+        verify(gen).writeObject(arg.capture());
         assertEquals(want, arg.getValue());
     }
 

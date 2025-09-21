@@ -8,12 +8,16 @@ import org.hibernate.Transaction;
 
 /**
  * Database session implementation against Hibernate
- *
  */
 public class DbSession implements IDbSession {
     private final Session     session;
     private       Transaction tx;
 
+    /**
+     * Constructor
+     *
+     * @param session session
+     */
     public DbSession(Session session) {
         this.session = session;
     }
@@ -75,6 +79,11 @@ public class DbSession implements IDbSession {
         session.remove(o);
     }
 
+    /**
+     * Get session
+     *
+     * @return session
+     */
     protected Session getSession() {
         return session;
     }

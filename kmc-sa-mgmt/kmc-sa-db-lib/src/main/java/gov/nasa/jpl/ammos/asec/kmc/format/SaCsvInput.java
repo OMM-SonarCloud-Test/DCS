@@ -1,7 +1,9 @@
 package gov.nasa.jpl.ammos.asec.kmc.format;
 
 import gov.nasa.jpl.ammos.asec.kmc.api.ex.KmcException;
-import gov.nasa.jpl.ammos.asec.kmc.api.sa.SecAssn;
+import gov.nasa.jpl.ammos.asec.kmc.api.sa.FrameType;
+import gov.nasa.jpl.ammos.asec.kmc.api.sa.ISecAssn;
+import gov.nasa.jpl.ammos.asec.kmc.api.sa.SecAssnFactory;
 import gov.nasa.jpl.ammos.asec.kmc.api.sa.ServiceType;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -17,7 +19,6 @@ import java.util.List;
 
 /**
  * CSV Input
- *
  */
 public class SaCsvInput {
     private static final Logger LOG = LoggerFactory.getLogger(SaCsvInput.class);
@@ -26,25 +27,50 @@ public class SaCsvInput {
      * Parse CSV from reader
      *
      * @param reader CSV input
+     * @param type   frame type
      * @return list of SAs from CSV
      * @throws KmcException ex
      */
-    public List<SecAssn> parseCsv(Reader reader) throws KmcException {
-        List<SecAssn> sas = new ArrayList<>();
+    public List<ISecAssn> parseCsv(Reader reader, FrameType type) throws KmcException {
+        // come in with a desired frame type.
+        List<ISecAssn> sas = new ArrayList<>();
         try {
             Iterable<CSVRecord> records =
                     CSVFormat.Builder.create(CSVFormat.EXCEL).setHeader().setSkipHeaderRecord(false).build().parse(reader);
             for (CSVRecord record : records) {
-                SecAssn sa = convertRecord(record);
+                // if the type column is mapped, then we only want to include those that match the desired type (or ALL)
+                ISecAssn sa;
+                if (record.isMapped("type")) {
+                    FrameType recType = FrameType.fromString(record.get("type"));
+                    if (type == FrameType.ALL || recType == type) {
+                        // convert if the desired type is ALL, or the recType == the desired type
+                        sa = convertRecord(record, recType);
+                        // else, skip
+                    } else if (type == FrameType.UNKNOWN) {
+                        LOG.warn("Unknown frame type encountered, skipping: {}", record.get("type"));
+                        continue;
+                    } else {
+                        continue;
+                    }
+                } else {
+                    // unmapped, need to coerce it to desired type, default to TC
+                    FrameType coerceTo;
+                    if (type == FrameType.ALL) {
+                        coerceTo = FrameType.TC;
+                    } else {
+                        coerceTo = type;
+                    }
+                    sa = convertRecord(record, coerceTo);
+                }
                 if (sa != null) {
                     sas.add(sa);
                 }
             }
         } catch (IOException e) {
-            LOG.error("Encountered an I/O error while parsing CSV: ", e.getMessage());
+            LOG.error("Encountered an I/O error while parsing CSV: {}", e.getMessage());
             throw new KmcException("Unable to parse CSV due to I/O error: ", e);
         } catch (Exception e) {
-            LOG.error("Encountered unexpected exception while parsing CSV: ", e.getMessage());
+            LOG.error("Encountered unexpected exception while parsing CSV: {}", e.getMessage());
             throw new KmcException("Unable to parse CSV due to unexpected error: ", e);
         }
         return sas;
@@ -54,19 +80,20 @@ public class SaCsvInput {
      * Convert a parsed CSV record to a Security Association object
      *
      * @param record csv record
+     * @param type   frame type
      * @return sa
      * @throws KmcException ex
      */
-    public SecAssn convertRecord(CSVRecord record) throws KmcException {
+    public ISecAssn convertRecord(CSVRecord record, FrameType type) throws KmcException {
         try {
-            SecAssn sa = new SecAssn();
+            ISecAssn sa = SecAssnFactory.createSecAssn(type);
             sa.setSpi(parseInt(record.get("spi")));
             sa.setScid(parseShort(record.get("scid")));
             sa.setVcid(parseByte(record.get("vcid")));
             sa.setTfvn(parseByte(record.get("tfvn")));
             sa.setMapid(parseByte(record.get("mapid")));
             sa.setSaState(parseShort(record.get("sa_state")));
-            ServiceType st = null;
+            ServiceType st;
             try {
                 st = ServiceType.fromShort(parseShort(record.get("st")));
                 if (st == ServiceType.UNKNOWN) {
@@ -76,7 +103,7 @@ public class SaCsvInput {
             } catch (Exception e) {
                 // try to parse out text value
                 LOG.warn("Encountered an error while attempting to parse 'service type' as short, " +
-                        "will attempt to parse value as text: ", e.getMessage());
+                        "will attempt to parse value as text: {}", e.getMessage());
                 try {
                     st = ServiceType.valueOf(record.get("st"));
                 } catch (Exception e1) {
@@ -89,15 +116,20 @@ public class SaCsvInput {
             sa.setShsnfLen(parseShort(record.get("shsnf_len")));
             sa.setShplfLen(parseShort(record.get("shplf_len")));
             sa.setStmacfLen(parseShort(record.get("stmacf_len")));
-            sa.setEcsLen((short) 1);
-            sa.setEcs(parseHex(record.get("ecs")));
+            Short  ecsLen = (short) 1;
+            String ecsStr = record.get("ecs");
+            byte[] ecs    = checkNullValue(ecsStr) ? null : parseHex(ecsStr);
+            sa.setEcs(ecsLen, ecs);
             String ekid = record.get("ekid");
             sa.setEkid(checkNullValue(ekid) ? null : ekid);
-            sa.setIvLen(parseShort(record.get("iv_len")));
-            String iv = record.get("iv");
-            sa.setIv(checkNullValue(iv) ? null : parseHex(iv));
-            sa.setAcs(parseHex(record.get("acs")));
-            sa.setAcsLen((short) 1);
+            Short  ivLen = parseShort(record.get("iv_len"));
+            String ivStr = record.get("iv");
+            byte[] iv    = checkNullValue(ivStr) ? null : parseHex(ivStr);
+            sa.setIv(ivLen, iv);
+            String acsStr   = record.get("acs");
+            byte[] acsBytes = checkNullValue(acsStr) ? null : parseHex(acsStr);
+            Short  acsLen   = (short) 1;
+            sa.setAcs(acsLen, acsBytes);
             String akid = record.get("akid");
             sa.setAkid(checkNullValue(akid) ? null : akid);
             sa.setAbmLen(parseInt(record.get("abm_len")));
