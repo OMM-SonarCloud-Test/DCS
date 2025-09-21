@@ -169,7 +169,7 @@ jobs:
           path: codeql-artifacts-for-sonar/
 
       - name: Verify downloaded SARIF files
-        run: ls -R codeql-artifacts-for-sonar/
+        run: pwd; ls -R codeql-artifacts-for-sonar/
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5.3.1
