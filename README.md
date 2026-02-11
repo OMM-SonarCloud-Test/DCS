@@ -23,7 +23,7 @@ Required Build Dependencies:
 * Java Development Kit 17.x [OpenJDK 17.0.12]
 * cmake [3.26.5]
 * swig [4.0.2]
-* MariaDB Connector/C [3.2.6]
+* MariaDB Connector/C [3.2.6] 
 * cffi (Python module) [1.14.5]
 * invoke (Python module) [2.2.0]
 * pycryptodome (Python module) [3.20.0]
